@@ -1,0 +1,9 @@
+# Discord configurations
+discord:
+  bot_token: "NzAyODc0Mzc5ODI2MjMzNDY0.XqJdpw.0kDsBSL0GmrX4PL6cJgXHltwTEc"
+  server_id: 702873874127388772
+
+# Channel configurations
+channel:
+  category_name: "Linux"
+  channel_name: "Team"
