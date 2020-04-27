@@ -56,8 +56,6 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 		}else if msg.Content == "install" {
 			//Install stuff based on OS
 		}else{
-			fmt.Println("Input: ", msg.Content)
-
 			//run os command and send results
 			output := shellRun(msg.Content)
 			if output == ""{
@@ -80,7 +78,7 @@ func shellRun(cmd string) string{
 	// special cd
 	splittedCommand := strings.Fields(string(cmd))
 	args := splittedCommand[1:]
-	fmt.Println("args ", args)
+	// fmt.Println("args ", args)
 	if splittedCommand[0] == "cd" {
 		os.Chdir(strings.Join(args, ""))
 		return "Changed directory Successfully"
