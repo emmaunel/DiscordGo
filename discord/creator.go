@@ -30,7 +30,7 @@ func CreateCategory(client *disgord.Client, id int, categoryName string) *disgor
 // CreateChannel sends a message to the given channel.
 // channelID : The ID of a Channel.
 // data      : The message struct to send.
-func CreateChannel(client *disgord.Client,id int, category *disgord.Channel, channelname string){
+func CreateChannel(client *disgord.Client,id int, category *disgord.Channel, channelname string) *disgord.Channel {
 	if debug{
 		fmt.Println("[DEBUG]: Channel:", channelname)
 	}
@@ -40,8 +40,9 @@ func CreateChannel(client *disgord.Client,id int, category *disgord.Channel, cha
 	}
 	
 	//fmt.Println("ParentID ", category.ID)
-	client.CreateGuildChannel(context.Background(), disgord.Snowflake(id), "hello", channel)
+	subchan, _ := client.CreateGuildChannel(context.Background(), disgord.Snowflake(id), "hello", channel)
 
+	return subchan
 }
 
 // DeleteChannel will delete a channel given an id

