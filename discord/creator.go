@@ -41,7 +41,7 @@ func CreateChannel(channels []*disgord.Channel,client *disgord.Client,id int, ca
 	if debug{
 		fmt.Println("[DEBUG]: Channel:", channelname)
 	}
-	// channelPrefix := fmt.Sprintf("%s-", channelname)
+
 	index := 1
 	modifiedName:= fmt.Sprintf("%s-%d", channelname, index)
 	for _, cha := range channels {

