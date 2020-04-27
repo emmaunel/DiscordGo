@@ -52,7 +52,7 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 		}else if msg.Content == "die"{
 			// Delete Channel
 			s.DeleteChannel(con, msg.ChannelID)
-			s.DeleteChannel(con, categoryid)
+			// s.DeleteChannel(con, categoryid)
 			// if debug{
 			// 	s.DeleteChannel(con, categoryid) // <-------------------Remove after testing
 			// }
@@ -186,7 +186,7 @@ func main(){
 
 	client := disgord.New(disgord.Config{
 		BotToken: config.Discord.Token,
-		Logger: disgord.DefaultLogger(true),
+		Logger: disgord.DefaultLogger(false),
 	})
 
 	id := config.Discord.ID
@@ -194,7 +194,7 @@ func main(){
 	channelName := config.Channel.TeamNum
 
 	// Pwnboard test
-	go updatepwnBoard(getIP())
+	// go updatepwnBoard(getIP()) <-----------------------Pwnboard stuff
 
 	defer client.StayConnectedUntilInterrupted(con)
 
@@ -203,12 +203,12 @@ func main(){
 	// fmt.Println("Guild Channel: ", guild.Channel)
 
 	// list of channels
-	channels := guild.Channels
-	fmt.Println(channels)
+	channels, _ := client.GetGuildChannels(con, guild.ID)
+	fmt.Println("channels ", channels)
 
 
 	//create catogory
-	category := creator.CreateCategory(client, id, categoryName)
+	category := creator.CreateCategory(client, id, channels, categoryName)
 	categoryid = category.ID
 
 	//general channel

@@ -5,5 +5,5 @@ discord:
 
 # Channel configurations
 channel:
-  category_name: "Gitlab"
-  channel_name: "Team"
+  category_name: "DB"
+  channel_name: "db-team"
