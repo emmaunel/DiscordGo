@@ -1,7 +1,7 @@
 # Discord configurations
 discord:
-  bot_token: "NzAyODc0Mzc5ODI2MjMzNDY0.XqJdpw.0kDsBSL0GmrX4PL6cJgXHltwTEc"
-  server_id: 702873874127388772
+  bot_token: "BOT_TOKEN"
+  server_id: 9999
 
 # Channel configurations
 channel:
