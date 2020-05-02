@@ -17,6 +17,10 @@ That's what this project is about.
 
 * Video coming soon
 
+![alt text](./img/command.png "Command example")
+![alt text](./img/teams.png "Team list")
+
+
 # Build
 
 `go build main.go`
