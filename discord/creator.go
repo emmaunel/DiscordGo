@@ -8,18 +8,18 @@ import (
 
 var debug = false
 
-// CreateCategory sends a message to the given channel.
-// channelID : The ID of a Channel.
-// data      : The message struct to send.
+// CreateCategory create a category for other channels
+// client : The bot.
+// id : Server's ID
+// channels: list of available channels
+// catergoryName: The name of the category you want to create
 func CreateCategory(client *disgord.Client, id int, channels []*disgord.Channel, categoryName string) *disgord.Channel {
 	if debug{
 		fmt.Println("[DEBUG]: Received os:", categoryName)
 	}
 
 	for _, cha := range channels {
-		// fmt.Println("Channel: ", cha.Name)
 		if categoryName == cha.Name{
-			//fmt.Println("Category already exist")
 			return cha
 		}
 	}
@@ -35,8 +35,11 @@ func CreateCategory(client *disgord.Client, id int, channels []*disgord.Channel,
 }
 
 // CreateChannel sends a message to the given channel.
-// channelID : The ID of a Channel.
-// data      : The message struct to send.
+// channels: list of available channels
+// client : The bot.
+// id : Server's ID
+// category: The location where the channels will the created
+// channelname: The name of the channel you want to create
 func CreateChannel(channels []*disgord.Channel,client *disgord.Client,id int, category *disgord.Channel, channelname string) *disgord.Channel {
 	if debug{
 		fmt.Println("[DEBUG]: Channel:", channelname)

