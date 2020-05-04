@@ -27,7 +27,7 @@ That's what this project is about.
 
 # TODO
 
-- [ ] Statically comily the config file
+- [ ] Statically comile the config file
 - [ ] Cross-platorm
 - [ ] File upload and download
 
