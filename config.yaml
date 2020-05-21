@@ -1,9 +1,0 @@
-# Discord configurations
-discord:
-  bot_token: "NzAyODc0Mzc5ODI2MjMzNDY0.XrC0Bg.7yHWBS1dAylWM3UmAQ5rzoooqYQ"
-  server_id: 702873874127388772
-
-# Channel configurations
-channel:
-  category_name: "bsd"
-  channel_name: "bsd-team"
