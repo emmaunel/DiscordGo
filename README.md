@@ -27,26 +27,18 @@ That's what this project is about.
 
 # TODO
 
-- [ ] Statically comile the config file
+~~- [x] Statically comile the config file (I used environment variable)~~
+
 - [ ] Cross-platorm
 - [ ] File upload and download
 
 # Config file
 
-This is example config. Replace the bot_token and server_id with yours and you should be good to go
+~~This is example config. Replace the bot_token and server_id with yours and you should be good to go~~
 
-```
-# Discord configurations
-discord:
-  bot_token: "NzAyODc0Mzc5ODI2MjMzNDY0.XqJdpw.0kDsBSL0GmrX4PL6cJgXHltwTEc"
-  server_id: 9999
+For easy compilation, I changed the code so that the token and is are compiled directly into the binary.
+So change the `botToken` and `id` variable in top of the main.go file
 
-# Channel configurations
-channel:
-  category_name: "bsd"
-  channel_name: "bsd-team"
-
-```
 
 # Disclamers
 The author is in no way responsible for any illegal use of this software. It is provided purely as an educational proof of concept. We are also not responsible for any damages or mishaps that may happen in the course of using this software. Use at your own risk.

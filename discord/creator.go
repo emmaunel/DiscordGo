@@ -47,9 +47,14 @@ func CreateChannel(channels []*disgord.Channel,client *disgord.Client,id int, ca
 
 	index := 1
 	modifiedName:= fmt.Sprintf("%s-%d", channelname, index)
+
 	for _, cha := range channels {
 		// fmt.Println(i)
 		name := cha.Name
+		if name == "general"{
+			return nil
+		}else
+		
 		// if the name already exist, increase the team num
 		if name == modifiedName{
 			//increase index
@@ -58,6 +63,7 @@ func CreateChannel(channels []*disgord.Channel,client *disgord.Client,id int, ca
 			modifiedName = fmt.Sprintf("%s-%d", channelname, index)
 		}
 	}
+
 
 	// fmt.Sprintf("%s%d", modifiedName, index)
 	channel := &disgord.CreateGuildChannelParams{
