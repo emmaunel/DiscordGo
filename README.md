@@ -41,7 +41,7 @@ So change the `botToken` and `id` variable in top of the main.go file
 
 
 # Disclamers
-The author is in no way responsible for any illegal use of this software. It is provided purely as an educational proof of concept. We are also not responsible for any damages or mishaps that may happen in the course of using this software. Use at your own risk.
+The author is in no way responsible for any illegal use of this software. It is provided purely as an educational proof of concept. I am also not responsible for any damages or mishaps that may happen in the course of using this software. Use at your own risk.
 
 # Used Libraries
 * [disgord](https://github.com/andersfylling/disgord)

