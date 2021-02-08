@@ -1,20 +1,24 @@
-AGENT=d2
 SERVER=d2Server
+LIN_SERVER=lind2Server
 DIRECTORY=bin
 MAC=macos-agent
 LINUX=linux-agent
-WIN=windows-agent
+WIN=windows-agent.exe
 FLAGS=-ldflags "-s -w"
 
 
-all: clean create-directory server agent-mac agent-linux agent-windows
+all: clean create-directory server-mac server-linux agent-mac agent-linux agent-windows
 
 create-directory:
 	mkdir ${DIRECTORY}
 
-server:
-	echo "Compiling server"
-	go build -o ${DIRECTORY}/${SERVER} cmd/server/main.go
+server-mac:
+	echo "Compiling mac server"
+	env GOOS=darwin GOARCH=amd64 go build -o ${DIRECTORY}/${SERVER} cmd/server/main.go
+
+server-linux:
+	echo "Compiling linux server"
+	env GOOS=linux GOARCH=amd64 go build -o ${DIRECTORY}/${LIN_SERVER} cmd/server/main.go
 
 agent-mac:
 	echo "Compiling macos binary"

@@ -1,5 +1,3 @@
-// +build linux
-
 package cli
 
 import (
@@ -18,6 +16,14 @@ import (
 )
 
 var Prompt *readline.Instance
+
+
+//TODO: COMMAND GRouPING based on hostname
+// like send "shutdown " to all web host
+
+//TODO: when you type "cmd"
+// Start another prompt named "cmd" 
+// instead of typing cmd <command> all the time
 
 // Taking from their example
 func filterInput(r rune) (rune, bool) {
@@ -197,6 +203,9 @@ func mainMenuHelp() {
 		{"exit", "Exiting the server"},
 		{"interact <UUID>", "Something something with agent"},
 		{"agents", "List all the connected agents"},
+		{"command <group by os or hostname> <all>", "send command all agents"}, //TODO
+		{"db clean", "clean db"}, // TODO
+		{"ping all", "This ping will ping all agents"}, //TODO
 	}
 
 	table.SetHeader([]string{"Command", "Description"})
@@ -211,12 +220,13 @@ func agentMenuHelp() {
 		{"help", "Display this menu"},
 		{"exit", "Exiting the server"},
 		{"kill", "stop/remove the agent"},
+		{"interact <UUID>", "Something something with agent"}, //TODO
 		{"command", "send command to the agent"}, 
-		{"shell", "send a reverse shell to us"}, // Optional to give their port #
+		{"shell", "send a reverse shell to us"}, // TODO: Optional to give their port #
 		{"ping", "check if the agent is alive"},
 		{"back", "Return back to main menu"},
 		{"agents", "List all the connected agents"},
-		{"fileupload <source> <destination>", "Upload files to an agent"},
+		{"fileupload <source> <destination>", "Upload files to an agent"}, //TODO
 	}
 
 	table.SetHeader([]string{"Command", "Description"})

@@ -66,9 +66,9 @@ func main() {
 
 	// TODO: Reconnect back to server
 	// ping the server every minute for now (not my solution)
-	pulseDelay := time.Duration(60)
-	tick := time.NewTicker(time.Second * pulseDelay)
-	go heartbeat(dg, tick)
+	// pulseDelay := time.Duration(60)
+	// tick := time.NewTicker(time.Second * pulseDelay)
+	// go heartbeat(dg, tick)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
@@ -169,6 +169,9 @@ func heartBeat(dg *discordgo.Session) {
 	// tick := time.NewTicker(time.Second * pulseDelay)
 	// go heartbeat(dg, tick)
 	// go heartBeat()
+	//server --> you up?
+	//agent --> N/A?
+	//change status to red
 
 }
 

