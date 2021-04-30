@@ -18,7 +18,7 @@ import (
 
 //------------------CONSTANTS---------------------
 var botToken = "CHANGE-ME"
-var id =  // <-------- Server ID
+var id =  12// <-------- Server ID
 var categoryName = "bsd"
 var channelName = "bsd-team"
 

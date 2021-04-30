@@ -1,0 +1,9 @@
+TODO:
+* Split command output if > 2000
+* staging script
+* Implement timestamp in db
+* fix hearbeat feature
+
+Changelog 1.2:
+* Implement mysql for database
+* Figure out a way to add agent after they connect before the server is up

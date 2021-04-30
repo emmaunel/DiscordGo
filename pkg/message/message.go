@@ -20,6 +20,7 @@ const (
 	MESSAGE_DISCONNECT Type = iota
 	MESSAGE_RECONNECT Type = iota
 	MESSAGE_SHELL Type = iota
+	MESSAGE_HEARTBEAT = iota
 )
 
 type Message struct {
@@ -28,14 +29,6 @@ type Message struct {
 	Message 	string
 	Server		bool
 	HasAttachment bool
-}
-
-type FileUpload struct {
-	From	string
-	To		string
-	Destination string // where the file should be saved
-	Source 		string // location of file on local machine (DO I need this) 
-
 }
 
 // NewMessage wiill create a new Message struct and convert it json

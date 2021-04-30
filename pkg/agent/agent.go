@@ -2,11 +2,12 @@ package agent
 
 // AgentStat represent a single target
 type Agent struct {
-	UUID	 string
-	HostName string
-	OS 		 string
-	IP       string // This will be the local IP
-	EIP		 string // This will be the external IP
+	UUID	  string
+	HostName  string
+	OS 		  string
+	IP        string 
+	Status	  string 
+	Timestamp string
 }
 
 // AgentInfo keeps track of each agent
