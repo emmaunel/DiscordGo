@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 	"strconv"
+	// "flag"
 
 
 	"DiscordGo/pkg/agents"
@@ -21,6 +22,9 @@ import (
 	"github.com/fatih/color"
 )
 
+
+// TODO: Create a flag --mode
+// --mode cli and --mode gui(discord)
 func main(){
 	util.CreateDatabaseAndTable()
 	util.LoadFromDB()
@@ -87,7 +91,7 @@ func heartBeat(dg *discordgo.Session, m *discordgo.MessageCreate){
 	var messageJSON message.Message
 	json.Unmarshal([]byte(m.Content), &messageJSON)
 
-	fmt.Println("bloop")
+	// fmt.Println("bloop")
 	// checkAndUpdateAgentStatus(3)
 
 	if messageJSON.MessageType == message.MESSAGE_HEARTBEAT{
@@ -106,12 +110,12 @@ func checkAndUpdateAgentStatus(heartbeatDuration int){
 			currentMinute := time.Now().Minute()
 			agentTimeStampMinute, _ := strconv.Atoi(strings.Split(agent.Timestamp, ":")[0])
 	
-			fmt.Println("CurrentMinute: ", currentMinute)
-			fmt.Println("AgentTimeStamp: ", agentTimeStampMinute)
+			// fmt.Println("CurrentMinute: ", currentMinute)
+			// fmt.Println("AgentTimeStamp: ", agentTimeStampMinute)
 
 
 			if (currentMinute - agentTimeStampMinute) >= heartbeatDuration{
-				fmt.Println("The minute is greater than ", heartbeatDuration)
+				// fmt.Println("The minute is greater than ", heartbeatDuration)
 				util.UpdateAgentStatus(agent.UUID, "Dead")
 			} else{
 				util.UpdateAgentStatus(agent.UUID, "Alive")
@@ -121,3 +125,4 @@ func checkAndUpdateAgentStatus(heartbeatDuration int){
 	} 
 
 }
+

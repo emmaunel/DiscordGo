@@ -4,10 +4,11 @@ DIRECTORY=bin
 MAC=macos-agent
 LINUX=linux-agent
 WIN=windows-agent.exe
+RASP=rasp
 FLAGS=-ldflags "-s -w"
 
 
-all: clean create-directory server-mac server-linux agent-mac agent-linux agent-windows
+all: clean create-directory agent-mac agent-linux agent-windows agent-rasp
 
 create-directory:
 	mkdir ${DIRECTORY}
@@ -31,6 +32,10 @@ agent-linux:
 agent-windows:
 	echo "Compiling Windows binary"
 	env GOOS=windows GOARCH=amd64 go build ${FLAGS} -o ${DIRECTORY}/${WIN} cmd/agent/main.go
+
+agent-rasp:
+	echo "Compiling RASPI binary"
+	env GOOS=linux GOARCH=arm GOARM=7 go build ${FLAGS} -o ${DIRECTORY}/${RASP} cmd/agent/main.go
 
 clean:
 	rm -rf ${DIRECTORY}

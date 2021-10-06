@@ -5,6 +5,7 @@ import (
 	"DiscordGo/pkg/agents"
 	"database/sql"
 	"fmt"
+	"sync"
 
 	"DiscordGo/pkg/util/constants"
 
@@ -12,6 +13,7 @@ import (
 )
 
 var DB *sql.DB
+var mutex = &sync.Mutex{}
 var err error
 
 func CreateDatabaseAndTable() {
@@ -52,13 +54,33 @@ func CreateDatabaseAndTable() {
 }
 
 func InsertAgentToDB(agentID string, hostname string, agentIP string, agentOS string) {
-	//insert statement
-	insertStat, err := DB.Prepare("INSERT INTO Agent VALUES (?, ?, ?, ?, ?, ?)")
-	if err != nil {
-		panic(err.Error())
-	}
-	// execute
-	_, _ = insertStat.Exec(agentID, hostname, agentOS, agentIP, "Alive", "null")
+
+	// if DB == nil {
+		mutex.Lock()
+        defer mutex.Unlock()
+        if DB == nil {
+            fmt.Println("Creating Single Instance Now")
+            // var err error
+			//insert statement
+			insertStat, err := DB.Prepare("INSERT INTO Agent VALUES (?, ?, ?, ?, ?, ?)")
+			if err != nil {
+				panic(err.Error())
+			}
+			// execute
+			_, _ = insertStat.Exec(agentID, hostname, agentOS, agentIP, "Alive", "null")
+            if err != nil {
+                panic(err)
+            }
+        }
+	// }
+
+	// //insert statement
+	// insertStat, err := DB.Prepare("INSERT INTO Agent VALUES (?, ?, ?, ?, ?, ?)")
+	// if err != nil {
+	// 	panic(err.Error())
+	// }
+	// // execute
+	// _, _ = insertStat.Exec(agentID, hostname, agentOS, agentIP, "Alive", "null")
 }
 
 func LoadFromDB() {
