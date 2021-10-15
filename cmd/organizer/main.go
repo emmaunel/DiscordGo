@@ -67,7 +67,8 @@ func cleanChannels(dg *discordgo.Session) {
 		}
 		if !groupExixsts {
 			println("Creating non-Existing group")
-			dg.GuildChannelCreate(constants.ServerID, catName, 4)
+			newChan, _ := dg.GuildChannelCreate(constants.ServerID, catName, 4)
+			checkChannels = append(checkChannels, newChan)
 		}
 	}
 
