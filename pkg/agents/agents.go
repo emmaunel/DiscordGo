@@ -1,12 +1,14 @@
 package agents
 
 import (
-	"DiscordGo/pkg/agent"
 	"errors"
+
+	"github.com/emmaunel/DiscordGo/pkg/agent"
 )
+
 var Agents []*agent.Agent
 
-func AddNewAgent(agentID string, hostname string, agentIP string, agentOS string){
+func AddNewAgent(agentID string, hostname string, agentIP string, agentOS string) {
 	newAgent := &agent.Agent{}
 	newAgent.UUID = agentID
 	newAgent.HostName = hostname
@@ -22,7 +24,7 @@ func AddNewAgent(agentID string, hostname string, agentIP string, agentOS string
 	Agents = append(Agents, newAgent)
 }
 
-func RemoveAgent(agentID string){
+func RemoveAgent(agentID string) {
 	newAgentlist := []*agent.Agent{}
 
 	for _, agent := range Agents {
@@ -34,7 +36,7 @@ func RemoveAgent(agentID string){
 	Agents = newAgentlist
 }
 
-func DoesAgentExist(agentID string) bool{
+func DoesAgentExist(agentID string) bool {
 	// nihilism := false
 	for _, agent := range Agents {
 		if agent.UUID == agentID {
@@ -44,7 +46,7 @@ func DoesAgentExist(agentID string) bool{
 	return false
 }
 
-func UseAgent(agentID string) (agent.Agent, error){
+func UseAgent(agentID string) (agent.Agent, error) {
 
 	for _, agent := range Agents {
 		if agent.UUID == agentID {
@@ -52,5 +54,5 @@ func UseAgent(agentID string) (agent.Agent, error){
 		}
 	}
 	emptyAgent := &agent.Agent{}
-	return *emptyAgent, errors.New("Couldn't not find agent")
+	return *emptyAgent, errors.New("couldn't not find agent")
 }

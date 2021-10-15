@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
 	// "time"
 
-	"DiscordGo/pkg/agents"
-	"DiscordGo/pkg/message"
-	"DiscordGo/pkg/util"
+	"github.com/emmaunel/DiscordGo/pkg/agents"
+	"github.com/emmaunel/DiscordGo/pkg/message"
+	"github.com/emmaunel/DiscordGo/pkg/util"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/chzyer/readline"
@@ -246,9 +247,9 @@ func mainMenuHelp() {
 		{"exit", "Exiting the server"},
 		{"interact <UUID>", "Something something with agent"},
 		{"agents", "List all the connected agents"},
-		{"kill all", "stop/remove the agents"}, 
+		{"kill all", "stop/remove the agents"},
 		{"command <group os or hostname> <all>", "send command all agents"},
-		{"db clean", "Delete database"},                          
+		{"db clean", "Delete database"},
 		{"ping all", "Ping all agents make sure they are alive"}, //TODO
 	}
 

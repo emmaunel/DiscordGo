@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	"DiscordGo/pkg/util/constants"
+	"github.com/emmaunel/DiscordGo/pkg/util/constants"
 
 	"github.com/bwmarrin/discordgo"
 )

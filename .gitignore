@@ -1,3 +1,4 @@
 ./vscode
 .DS_Store
-pkg/util/constants/*
+pkg/util/constants/variables.go
+bin

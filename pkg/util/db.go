@@ -1,13 +1,14 @@
 package util
 
 import (
-	"DiscordGo/pkg/agent"
-	"DiscordGo/pkg/agents"
 	"database/sql"
 	"fmt"
 	"sync"
 
-	"DiscordGo/pkg/util/constants"
+	"github.com/emmaunel/DiscordGo/pkg/agent"
+	"github.com/emmaunel/DiscordGo/pkg/agents"
+
+	"github.com/emmaunel/DiscordGo/pkg/util/constants"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -56,22 +57,22 @@ func CreateDatabaseAndTable() {
 func InsertAgentToDB(agentID string, hostname string, agentIP string, agentOS string) {
 
 	// if DB == nil {
-		mutex.Lock()
-        defer mutex.Unlock()
-        if DB == nil {
-            fmt.Println("Creating Single Instance Now")
-            // var err error
-			//insert statement
-			insertStat, err := DB.Prepare("INSERT INTO Agent VALUES (?, ?, ?, ?, ?, ?)")
-			if err != nil {
-				panic(err.Error())
-			}
-			// execute
-			_, _ = insertStat.Exec(agentID, hostname, agentOS, agentIP, "Alive", "null")
-            if err != nil {
-                panic(err)
-            }
-        }
+	mutex.Lock()
+	defer mutex.Unlock()
+	if DB == nil {
+		fmt.Println("Creating Single Instance Now")
+		// var err error
+		//insert statement
+		insertStat, err := DB.Prepare("INSERT INTO Agent VALUES (?, ?, ?, ?, ?, ?)")
+		if err != nil {
+			panic(err.Error())
+		}
+		// execute
+		_, _ = insertStat.Exec(agentID, hostname, agentOS, agentIP, "Alive", "null")
+		if err != nil {
+			panic(err)
+		}
+	}
 	// }
 
 	// //insert statement
@@ -91,12 +92,11 @@ func LoadFromDB() {
 	var id, hostname, os, ip, status, timestamp string
 	for result.Next() {
 		_ = result.Scan(&id, &hostname, &os, &ip, &status, &timestamp)
-		agents.Agents = append(agents.Agents, &agent.Agent{UUID: id, HostName: hostname, OS: os, IP: ip, Status: status, Timestamp:timestamp})
+		agents.Agents = append(agents.Agents, &agent.Agent{UUID: id, HostName: hostname, OS: os, IP: ip, Status: status, Timestamp: timestamp})
 	}
 }
 
-
-func UpdateAgentTimestamp(agentID string, timestamp string){
+func UpdateAgentTimestamp(agentID string, timestamp string) {
 	updateStat, err := DB.Prepare("update Agents.agent set TimeStamp=? where UUID=?")
 	if err != nil {
 		panic(err) // proper error handling instead of panic in your app
@@ -106,10 +106,9 @@ func UpdateAgentTimestamp(agentID string, timestamp string){
 		fmt.Println(err)
 	}
 
-
 }
 
-func UpdateAgentStatus(agentID string, status string){
+func UpdateAgentStatus(agentID string, status string) {
 	updateStat, err := DB.Prepare("update Agents.agent set Status=? where UUID=?")
 	if err != nil {
 		panic(err) // proper error handling instead of panic in your app
@@ -120,7 +119,7 @@ func UpdateAgentStatus(agentID string, status string){
 	}
 }
 
-func DropDB(){
+func DropDB() {
 	updateStat, err := DB.Prepare("drop database Agents")
 	if err != nil {
 		panic(err) // proper error handling instead of panic in your app
