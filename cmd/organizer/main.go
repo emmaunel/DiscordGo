@@ -55,7 +55,7 @@ func parseCSV(csvName string) (map[string]Target, []string) {
 func cleanChannels(dg *discordgo.Session) {
 
 	println("Start Clean")
-	targetMap, teams := parseCSV("targets.csv")
+	targetMap, teams := parseCSV("targets_UB.csv")
 	checkChannels, _ := dg.GuildChannels(constants.ServerID)
 	for _, catName := range teams {
 		groupExixsts := false

