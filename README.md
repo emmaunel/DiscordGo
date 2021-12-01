@@ -1,6 +1,6 @@
 # DiscordGo
 
-![Version](https://img.shields.io/badge/Version-1.1-brightgreen)
+![Version](https://img.shields.io/badge/Version-2.0-brightgreen)
 
 Discord C2 for Redteam....Need a better name.
 If you can think of one, please tell me. :)
@@ -22,14 +22,20 @@ When creating the bot, you need it give it some permission. For testing, I gave 
 * Send Messages
 * Read Messages
 * Attach Files
+* Manage Server
 
 # Usage
 
-Edit this file `pkg/util/constants/variables.go` with your token and ID.
+Edit this file `pkg/util/constants/variables.go` with your token and ID. Or create it if not there
 
 The bot token can be found on discord developer dashboard where you created the bot. To get your server ID, go to your server setting and click on `widget`. On the right pane, you see the your ID.
 
-By default, when you add your bot, it is added to the general text channel. If you want to use another text channel, right click on your desired channel and copy the channel ID. if you don't want a custom channel, ignore the `ChannelID` field.
+An example configuration file looks like this:
+```
+var ServerID = "XXXXXXXXXXXX"
+var BotToken = "XXXXXXXXXXX"
+var ChannelID = "808803120095428690"
+```
 
 After that is done, all you have to do is run `make`. That will create 5 binaries.
 
@@ -44,17 +50,15 @@ After that is done, all you have to do is run `make`. That will create 5 binarie
 # Feature
 
 * Cross-platform
-* File upload
+* Organizer(talk about this)
 
-# TODO
+# WIP (Work in Progress)
 
 - [x] Cross-platform
-- [x] File upload
-- [ ] Use mysql instead of local list for agents
+- [ ] File upload
 - [ ] File download
-- [ ] Agent grouping(by hostname like web hosts and so on)
+- [ ] Agent grouping(by hostname like web hosts and so on, slash command)
 - [ ] Group commands
-- [ ] Switch between cli mode and GUI(discord) mode
 
 
 # Screenshots and Video
@@ -71,8 +75,6 @@ Every message on discord are saved on Discord's server, so be careful and not up
 
 # Used Libraries
 * [discordgo](https://github.com/bwmarrin/discordgo)
-* [CLI](https://github.com/chzyer/readline)
-* [Color](https://github.com/fatih/color)
 
 
 Inspired by [SierrOne](https://github.com/berkgoksel/SierraOne)

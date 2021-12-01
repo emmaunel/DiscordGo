@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"os"
@@ -16,7 +17,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+//TODO: Remove comp channel except for #general and VC general
+
 var channelID *discordgo.Channel
+var fileInputPtr string
 
 type Target struct {
 	ip         string
@@ -51,10 +55,10 @@ func parseCSV(csvName string) (map[string]Target, []string) {
 	return list, blH
 }
 
-func cleanChannels(dg *discordgo.Session) {
-
+func cleanChannels(dg *discordgo.Session, targetFile string) {
+	println(targetFile) // TODO Add to logging
 	println("Start Clean")
-	targetMap, teams := parseCSV("targets_UB.csv")
+	targetMap, teams := parseCSV(targetFile)
 	checkChannels, _ := dg.GuildChannels(constants.ServerID)
 	for _, catName := range teams {
 		groupExixsts := false
@@ -93,12 +97,21 @@ func cleanChannels(dg *discordgo.Session) {
 }
 
 func main() {
+	flag.StringVar(&fileInputPtr, "target", "", "This csv should contains the list of targets: ip,team#,hostname")
+	flag.Parse()
+
+	if fileInputPtr == "" { 
+		fmt.Println("No file specified")
+		os.Exit(0)
+	} 
+
 	dg, err := discordgo.New("Bot " + constants.BotToken)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
 	}
-	cleanChannels(dg)
+
+	cleanChannels(dg, fileInputPtr)
 
 	dg.AddHandler(guimessageCreater)
 
@@ -126,7 +139,6 @@ func main() {
 // Request is done every 15 seconds
 // ip: Victim's IP
 func updatepwnBoard(ip string) {
-
 	url := "http://pwnboard.win/generic"
 
 	data := PwnBoard{
@@ -170,7 +182,11 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 	}
 
 	if message.Content == "clean" {
-		cleanChannels(dg)
+		cleanChannels(dg, fileInputPtr)
 		dg.ChannelMessageSend(message.ChannelID, "Cleaned")
+	}
+
+	if message.Content == "del" { // TODO Remove channels
+		
 	}
 }
