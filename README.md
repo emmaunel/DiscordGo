@@ -2,12 +2,12 @@
 
 ![Version](https://img.shields.io/badge/Version-2.0-brightgreen)
 
-Discord C2 for Redteam....Need a better name.
+Discord C2 for Redteam engagement....Need a better name.
 If you can think of one, please tell me. :)
 
 # Why I made this
 
-During Blue-Red Team competition, I needed an easy and fast way to keep connected.
+During Blue-Red Team competition, I needed an easy and fast way to keep connected and a way for mutiple redteamer to run commands, hence DiscordGo.
 Since Discord is getting popular, why not use the platorm as a c2.
 That's what this project is about.
 
@@ -34,7 +34,6 @@ An example configuration file looks like this:
 ```
 var ServerID = "XXXXXXXXXXXX"
 var BotToken = "XXXXXXXXXXX"
-var ChannelID = "808803120095428690"
 ```
 
 After that is done, all you have to do is run `make`. That will create 5 binaries.
@@ -50,7 +49,7 @@ After that is done, all you have to do is run `make`. That will create 5 binarie
 # Feature
 
 * Cross-platform
-* Organizer(talk about this)
+
 
 # WIP (Work in Progress)
 
@@ -59,13 +58,16 @@ After that is done, all you have to do is run `make`. That will create 5 binarie
 - [ ] File download
 - [ ] Agent grouping(by hostname like web hosts and so on, slash command)
 - [ ] Group commands
+- [ ] Integrate with pwndrop
+
 
 
 # Screenshots and Video
-Agent connected
-![CLI Mode](./img/cli.png "Command example")
-Agent response
-![Sample Command](./img/agent_cmd.png "Team list")
+Example of connected targets
+![List of targets](./img/example-team.png "Example Team")
+
+Command Sample
+![Sample Command](./img/example-command.png "Example Command")
 
 
 # Disclamers
