@@ -7,3 +7,7 @@ Changelog 2.0:
 * Updated README.md
 * Added heartbeat feature
 * Ability to output larger output
+
+Changelog 2.1:
+* We have a logo. woohoo
+* Intergrated pwndrop with the organizer bot

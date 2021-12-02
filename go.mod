@@ -16,6 +16,6 @@ require (
 	github.com/chzyer/logex v1.1.10 // indirect
 	github.com/chzyer/test v0.0.0-20210722231415-061457976a23 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/gorilla/websocket v1.4.1 // indirect
+	github.com/gorilla/websocket v1.4.1
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
 )

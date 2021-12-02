@@ -1,6 +1,15 @@
-# DiscordGo
+<h1 align="center"> DiscordGo </h1> 
+<p align="center">
+  <a>
+    <img src="./img/logo.png" width="620">
+  </a>
+</p>
+
+
 
 ![Version](https://img.shields.io/badge/Version-2.0-brightgreen)
+![Language](https://img.shields.io/badge/Language-Go-blue.svg?longCache=true&style=flat-square) 
+
 
 Discord C2 for Redteam engagement....Need a better name.
 If you can think of one, please tell me. :)
@@ -49,6 +58,7 @@ After that is done, all you have to do is run `make`. That will create 5 binarie
 # Feature
 
 * Cross-platform
+* Organozer(talk about and intergration to pwnboard)
 
 
 # WIP (Work in Progress)
@@ -62,12 +72,17 @@ After that is done, all you have to do is run `make`. That will create 5 binarie
 
 
 
-# Screenshots and Video
-Example of connected targets
-![List of targets](./img/example-team.png "Example Team")
-
-Command Sample
-![Sample Command](./img/example-command.png "Example Command")
+# Screenshots
+<p align="center">
+  <a>
+    <img src="./img/example-team.png" width="860">
+  </a>
+</p>
+<p align="center">
+  <a>
+    <img src="./img/example-command.png" width="860">
+  </a>
+</p>
 
 
 # Disclamers
