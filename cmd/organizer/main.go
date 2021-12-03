@@ -17,7 +17,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-//TODO: Remove comp channel except for #general and VC general
 
 var channelID *discordgo.Channel
 var fileInputPtr string
@@ -34,14 +33,15 @@ type PwnBoard struct {
 	Type string `json:"type"`
 }
 
-func parseCSV(csvName string) (map[string]Target, []string) {
+func parseCSV(csvName string) (map[string]Target, []string, []string) {
 	var list = make(map[string]Target)
 	f, err := os.Open(csvName)
 	if err != nil {
 		panic(err)
 	}
 	s := bufio.NewScanner(f)
-	blH := []string{}
+	teamnum := []string{}
+	hostnameList := []string{}
 	for s.Scan() {
 		lineBuff := s.Bytes()
 		v := strings.Split(string(lineBuff), ",")
@@ -50,15 +50,16 @@ func parseCSV(csvName string) (map[string]Target, []string) {
 			teamstring: v[1],
 			hostname:   v[2],
 		}
-		blH = append(blH, v[1])
+		teamnum = append(teamnum, v[1])
+		hostnameList = append(hostnameList, v[2])
 	}
-	return list, blH
+	return list, teamnum, hostnameList
 }
 
 func cleanChannels(dg *discordgo.Session, targetFile string) {
 	println(targetFile) // TODO Add to logging
 	println("Start Clean")
-	targetMap, teams := parseCSV(targetFile)
+	targetMap, teams, _ := parseCSV(targetFile)
 	checkChannels, _ := dg.GuildChannels(constants.ServerID)
 	for _, catName := range teams {
 		groupExixsts := false
@@ -100,10 +101,10 @@ func main() {
 	flag.StringVar(&fileInputPtr, "target", "", "This csv should contains the list of targets: ip,team#,hostname")
 	flag.Parse()
 
-	if fileInputPtr == "" { 
+	if fileInputPtr == "" {
 		fmt.Println("No file specified")
 		os.Exit(0)
-	} 
+	}
 
 	dg, err := discordgo.New("Bot " + constants.BotToken)
 	if err != nil {
@@ -186,7 +187,45 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 		dg.ChannelMessageSend(message.ChannelID, "Cleaned")
 	}
 
-	if message.Content == "del" { // TODO Remove channels
-		
+	if message.Content == "delcomp" { 
+		channels, _ := dg.GuildChannels(constants.ServerID)
+		_, teamnums, hostnames := parseCSV(fileInputPtr)
+
+		println("Looking at the channels")
+		for _, channel := range channels {
+			if channel.Type == discordgo.ChannelTypeGuildText {
+				for _, hostname := range hostnames {
+					if strings.ToLower(hostname) == channel.Name {
+						println("Deleting channel: " + channel.Name)
+						_, err := dg.ChannelDelete(channel.ID)
+						if err != nil {
+							println(err)
+						}
+						break
+					}
+				}
+			}
+		}
+
+		println()
+		println("Looking at the category")
+		for _, channel := range channels {
+			if channel.Type == discordgo.ChannelTypeGuildCategory {
+				for _, teamnum := range teamnums {
+					if teamnum == channel.Name {
+						println("Deleting category: " + channel.Name)
+						_, err := dg.ChannelDelete(channel.ID)
+						if err != nil {
+							println(err)
+						}
+						break
+					}
+
+				}
+			}
+		}
+
 	}
+
+
 }

