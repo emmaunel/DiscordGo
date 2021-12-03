@@ -1,0 +1,15 @@
+Changelog 1.2:
+* Implement mysql for database
+* Figure out a way to add agent after they connect before the server is up
+
+Changelog 2.0:
+* Drop the CLI functionality. Just using the Discord client now
+* Updated README.md
+* Added heartbeat feature
+* Ability to output larger output
+
+Changelog 2.1:
+* We have a logo. woohoo
+* Ability to delete channels/category after each competition
+
+
