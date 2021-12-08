@@ -1,5 +1,4 @@
 ./vscode
 .DS_Store
-pkg/util/constants/variables.go
 bin
 *.csv
