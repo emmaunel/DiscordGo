@@ -51,6 +51,19 @@ After that is done, all you have to do is run `make`. That will create 5 binarie
 * macos-agent
 ```
 
+## Organizer Bot
+
+To use the organizer bot, create a .csv file with the following format:
+
+```
+192168185200,team01,hostname1
+192168185201,team02,hostname2
+```
+
+To start the organizer bot: `go run cmd/organizer/main.go --target <csv_filename>.csv`
+
+Run `clean` in any channel to organize bots into their respective categories.
+
 # Feature
 
 * Cross-platform
