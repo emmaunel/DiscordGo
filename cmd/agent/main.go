@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/emmaunel/DiscordGo/pkg/agent"
-	"github.com/emmaunel/DiscordGo/pkg/util"
-	"github.com/emmaunel/DiscordGo/pkg/util/constants"
+	"DiscordGo/pkg/agent"
+	"DiscordGo/pkg/util"
+	"DiscordGo/pkg/util/constants"
 
 	"github.com/bwmarrin/discordgo"
 )

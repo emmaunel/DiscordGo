@@ -11,9 +11,9 @@ import (
 
 	// "time"
 
-	"github.com/emmaunel/DiscordGo/pkg/agents"
-	"github.com/emmaunel/DiscordGo/pkg/message"
-	"github.com/emmaunel/DiscordGo/pkg/util"
+	"DiscordGo/pkg/agents"
+	"DiscordGo/pkg/message"
+	"DiscordGo/pkg/util"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/chzyer/readline"

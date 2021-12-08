@@ -35,15 +35,11 @@ When creating the bot, you need it give it some permission. For testing, I gave 
 
 # Usage
 
-Edit this file `pkg/util/constants/variables.go` with your token and ID. Or create it if not there
+Edit this file `pkg/util/constants/variables.go` with your token and Server ID. 
 
 The bot token can be found on discord developer dashboard where you created the bot. To get your server ID, go to your server setting and click on `widget`. On the right pane, you see the your ID.
 
-An example configuration file looks like this:
-```
-var ServerID = "XXXXXXXXXXXX"
-var BotToken = "XXXXXXXXXXX"
-```
+If you are only using the GUI version (not using the server binaries), you do not need to modify the server variables in `variables.go`.
 
 After that is done, all you have to do is run `make`. That will create 5 binaries.
 

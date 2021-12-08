@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/emmaunel/DiscordGo/pkg/util/constants"
+	"DiscordGo/pkg/util/constants"
 
 	"github.com/bwmarrin/discordgo"
 )

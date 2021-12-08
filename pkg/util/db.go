@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/emmaunel/DiscordGo/pkg/agent"
-	"github.com/emmaunel/DiscordGo/pkg/agents"
+	"DiscordGo/pkg/agent"
+	"DiscordGo/pkg/agents"
 
-	"github.com/emmaunel/DiscordGo/pkg/util/constants"
+	"DiscordGo/pkg/util/constants"
 
 	_ "github.com/go-sql-driver/mysql"
 )

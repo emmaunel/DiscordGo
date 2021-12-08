@@ -3,7 +3,7 @@ package agents
 import (
 	"errors"
 
-	"github.com/emmaunel/DiscordGo/pkg/agent"
+	"DiscordGo/pkg/agent"
 )
 
 var Agents []*agent.Agent

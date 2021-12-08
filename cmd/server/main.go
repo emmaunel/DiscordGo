@@ -12,11 +12,12 @@ import (
 
 	// "flag"
 
-	"github.com/emmaunel/DiscordGo/pkg/agents"
-	"github.com/emmaunel/DiscordGo/pkg/cli"
-	"github.com/emmaunel/DiscordGo/pkg/message"
-	"github.com/emmaunel/DiscordGo/pkg/util"
-	"github.com/emmaunel/DiscordGo/pkg/util/constants"
+	"DiscordGo/pkg/agents"
+	"DiscordGo/pkg/cli"
+	"DiscordGo/pkg/message"
+	"DiscordGo/pkg/util"
+
+	"DiscordGo/pkg/util/constants"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/fatih/color"
