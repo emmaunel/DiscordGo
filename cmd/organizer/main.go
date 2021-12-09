@@ -13,8 +13,9 @@ import (
 	"strings"
 	"syscall"
 
-	"DiscordGo/pkg/util/constants"
+	"DiscordGo/pkg/util"
 
+	"github.com/AvraamMavridis/randomcolor"
 	"github.com/bwmarrin/discordgo"
 	log "github.com/sirupsen/logrus"
 )

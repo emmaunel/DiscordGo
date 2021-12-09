@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"DiscordGo/pkg/agent"
-	"DiscordGo/pkg/util/constants"
+	"DiscordGo/pkg/util"
 
 	"github.com/bwmarrin/discordgo"
 )

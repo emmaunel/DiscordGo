@@ -35,23 +35,28 @@ When creating the bot, you need it give it some permission. For testing, I gave 
 
 # Usage
 
-Edit this file `pkg/util/constants/variables.go` with your token and Server ID. 
+Edit this file `pkg/util/variables.go` with your `BotToken` and `ServerID`. Or create the file if not there
 
 The bot token can be found on discord developer dashboard where you created the bot. To get your server ID, go to your server setting and click on `widget`. On the right pane, you see the your ID.
 
-If you are only using the GUI version (not using the server binaries), you do not need to modify the server variables in `variables.go`.
+An example configuration file looks like this:
+```
+var ServerID = "XXXXXXXXXXX"
+var BotToken = "XXXXXXXXXXX"
+```
 
 After that is done, all you have to do is run `make`. That will create 3 binaries.
 
 ```
-* linux-agent
-* windows-agent.exe
-* macos-agent
+- linux-agent
+- windows-agent.exe
+- macos-agent
 ```
 
 ## Organizer Bot
 
-To use the organizer bot, create a .csv file with the following format:
+To use the organizer bot, create a .csv file with the following format(targetIP, teamNum, hostname):
+* Note target IP shouldn't have the `.` between them.
 
 ```
 192168185200,team01,hostname1
@@ -102,4 +107,5 @@ Every message on discord are saved on Discord's server, so be careful and not up
 
 
 Inspired by [SierrOne](https://github.com/berkgoksel/SierraOne)
+
 Logo by @BradHacker(https://github.com/BradHacker)
