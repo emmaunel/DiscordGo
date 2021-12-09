@@ -67,7 +67,8 @@ Run `clean` in any channel to organize bots into their respective categories.
 # Feature
 
 * Cross-platform
-* Organozer(talk about and intergration to pwnboard)
+* Organizer Bot
+* Pwnboard Integration
 
 
 # WIP (Work in Progress)
@@ -94,7 +95,7 @@ Run `clean` in any channel to organize bots into their respective categories.
 </p>
 
 
-# Disclamers
+# Disclaimers
 The author is in no way responsible for any illegal use of this software. It is provided purely as an educational proof of concept. I am also not responsible for any damages or mishaps that may happen in the course of using this software. Use at your own risk.
 
 Every message on discord are saved on Discord's server, so be careful and not upload any sensitive or confidential documents.
