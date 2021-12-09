@@ -35,15 +35,11 @@ When creating the bot, you need it give it some permission. For testing, I gave 
 
 # Usage
 
-Edit this file `pkg/util/constants/variables.go` with your token and ID. Or create it if not there
+Edit this file `pkg/util/constants/variables.go` with your token and Server ID. 
 
 The bot token can be found on discord developer dashboard where you created the bot. To get your server ID, go to your server setting and click on `widget`. On the right pane, you see the your ID.
 
-An example configuration file looks like this:
-```
-var ServerID = "XXXXXXXXXXXX"
-var BotToken = "XXXXXXXXXXX"
-```
+If you are only using the GUI version (not using the server binaries), you do not need to modify the server variables in `variables.go`.
 
 After that is done, all you have to do is run `make`. That will create 3 binaries.
 
@@ -53,8 +49,18 @@ After that is done, all you have to do is run `make`. That will create 3 binarie
 * macos-agent
 ```
 
-## Organizer bot (WIP)
-Don't worry about this part yet
+## Organizer Bot
+
+To use the organizer bot, create a .csv file with the following format:
+
+```
+192168185200,team01,hostname1
+192168185201,team02,hostname2
+```
+
+To start the organizer bot: `go run cmd/organizer/main.go --target <csv_filename>.csv`
+
+Run `clean` in any channel to organize bots into their respective categories.
 
 # Feature
 
