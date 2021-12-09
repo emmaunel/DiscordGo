@@ -12,4 +12,8 @@ Changelog 2.1:
 * We have a logo. woohoo
 * Ability to delete channels/category after each competition
 
+Changelog 2.1.1
+* Ability to download files from target
+* Created roles for group commands
+* Remove unused files
 

@@ -5,10 +5,10 @@
   </a>
 </p>
 
-
-
 ![Version](https://img.shields.io/badge/Version-2.0-brightgreen)
-![Language](https://img.shields.io/badge/Language-Go-blue.svg?longCache=true&style=flat-square) 
+![Language](https://img.shields.io/badge/Language-Go-blue.svg?longCache=true&style=flat-square)
+[![Go Report Card](https://goreportcard.com/badge/github.com/emmaunel/DiscordGo)](https://goreportcard.com/report/github.com/emmaunel/DiscordGo)
+![nil](https://img.shields.io/badge/nil-goated-green)
 
 
 Discord C2 for Redteam engagement....Need a better name.
@@ -45,15 +45,16 @@ var ServerID = "XXXXXXXXXXXX"
 var BotToken = "XXXXXXXXXXX"
 ```
 
-After that is done, all you have to do is run `make`. That will create 5 binaries.
+After that is done, all you have to do is run `make`. That will create 3 binaries.
 
 ```
-* d2Server --> MacOS Server binary(tested on Big Sur)
-* lind2Server --> Linux Server binary(should work on most linux distro)
 * linux-agent
 * windows-agent.exe
 * macos-agent
 ```
+
+## Organizer bot (WIP)
+Don't worry about this part yet
 
 # Feature
 
@@ -65,7 +66,7 @@ After that is done, all you have to do is run `make`. That will create 5 binarie
 
 - [x] Cross-platform
 - [ ] File upload
-- [ ] File download
+- [x] File download
 - [ ] Agent grouping(by hostname like web hosts and so on, slash command)
 - [ ] Group commands
 - [ ] Integrate with pwndrop
@@ -95,3 +96,4 @@ Every message on discord are saved on Discord's server, so be careful and not up
 
 
 Inspired by [SierrOne](https://github.com/berkgoksel/SierraOne)
+Logo by @BradHacker(https://github.com/BradHacker)

