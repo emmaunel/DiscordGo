@@ -36,6 +36,7 @@ type PwnBoard struct {
 	Type string `json:"type"`
 }
 
+// Parsing the input csv file and creates a list that will used in other parts of the code
 func parseCSV(csvName string) (map[string]Target, []string, []string) {
 	// var list = make(map[string]Target)
 	f, err := os.Open(csvName)
@@ -59,6 +60,7 @@ func parseCSV(csvName string) (map[string]Target, []string, []string) {
 	return list, teamnum, hostnameList
 }
 
+// A helper function to remove duplicate items in a list
 func removeDuplicatesValues(arrayToEdit []string) []string {
 	keys := make(map[string]bool)
 	list := []string{}
@@ -72,6 +74,7 @@ func removeDuplicatesValues(arrayToEdit []string) []string {
 	return list
 }
 
+// Create/Delete Roles for each target
 func createOrDeleteRoles(dg *discordgo.Session, create bool) {
 	log.Info("Creating Roles....")
 	g, err := dg.Guild(constants.ServerID)
@@ -128,6 +131,7 @@ func createOrDeleteRoles(dg *discordgo.Session, create bool) {
 	log.Info("Creating Roles Ended........")
 }
 
+// This function organizes the targets to their respective categories(team01, team02 and so on)
 func cleanChannels(dg *discordgo.Session, targetFile string) {
 	log.Info("Start Clean")
 	targetMap, teams, _ := parseCSV(targetFile)

