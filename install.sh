@@ -2,7 +2,7 @@
 
 # TODO
 # Installation script for discordC2.
-echo "Beginning ChatTails C2 installation."
+echo "Beginning DiscordGo C2 installation."
 
 printf "Please enter your server ID: "
 read server

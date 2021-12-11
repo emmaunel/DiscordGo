@@ -41,6 +41,7 @@ func init() {
 }
 
 func main() {
+	//TODO Do a check on the constant and produce a good error
 	dg, err := discordgo.New("Bot " + constants.BotToken)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
