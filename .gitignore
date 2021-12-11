@@ -2,4 +2,3 @@
 .DS_Store
 bin
 *.csv
-pkg/util/variables.go
