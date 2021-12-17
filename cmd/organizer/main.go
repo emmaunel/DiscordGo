@@ -20,10 +20,41 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var channelID *discordgo.Channel
-var fileInputPtr string
-var list = make(map[string]Target)
+var dg *discordgo.Session
+var err error
+var channelID *discordgo.Channel                  // Target Channel ID
+var fileInputPtr string                           // Input file string
+var targetMap map[string]Target                   // Putting each line of the csv in a list/array
+var teams []string                                // Special list of the team number: Used for ...
+var hostnameList []string                         // Special list of hostname: used for ...
+var heartbeatCounter, aliveAgents, deadAgents int // How many heartbeats have we had during an engagement
 
+var (
+	commands = []*discordgo.ApplicationCommand{
+		{
+			Name:        "stats",
+			Type:        discordgo.ChatApplicationCommand,
+			Description: "Quick stats about the comp",
+		},
+		{
+			Name:        "archive",
+			Type:        discordgo.ChatApplicationCommand,
+			Description: "Archive/Delete dead channels",
+		},
+		{
+			Name:        "clean",
+			Type:        discordgo.ChatApplicationCommand,
+			Description: "Rearranges channels to the right channel",
+		},
+		{
+			Name:        "delcomp",
+			Type:        discordgo.ChatApplicationCommand,
+			Description: "Cleaning up all targets",
+		},
+	}
+)
+
+// Target representation
 type Target struct {
 	ip         string
 	teamstring string
@@ -36,9 +67,30 @@ type PwnBoard struct {
 	Type string `json:"type"`
 }
 
+// This init function
+func init() {
+	flag.StringVar(&fileInputPtr, "target", "", "This csv should contains the list of targets: ip,team#,hostname")
+	flag.Parse()
+
+	if fileInputPtr == "" {
+		log.Fatal("No file specified")
+		os.Exit(0)
+	}
+
+	log.SetOutput(os.Stdout)
+	log.Info("Target file: " + fileInputPtr)
+
+	dg, err = discordgo.New("Bot " + util.BotToken)
+	if err != nil {
+		log.Error("error creating Discord session,", err)
+		return
+	}
+	log.Info("Bot Connected")
+}
+
 // Parsing the input csv file and creates a list that will used in other parts of the code
 func parseCSV(csvName string) (map[string]Target, []string, []string) {
-	// var list = make(map[string]Target)
+	var list = make(map[string]Target)
 	f, err := os.Open(csvName)
 	if err != nil {
 		panic(err)
@@ -60,24 +112,42 @@ func parseCSV(csvName string) (map[string]Target, []string, []string) {
 	return list, teamnum, hostnameList
 }
 
-// A helper function to remove duplicate items in a list
-func removeDuplicatesValues(arrayToEdit []string) []string {
-	keys := make(map[string]bool)
-	list := []string{}
-
-	for _, entry := range arrayToEdit {
-		if _, value := keys[entry]; !value {
-			keys[entry] = true
-			list = append(list, entry)
-		}
+func assignRoleToChannel(dg *discordgo.Session, channel *discordgo.Channel) {
+	log.Info("Assigning roles begin.......")
+	permissionOverwriteList := []*discordgo.PermissionOverwrite{}
+	g, err := dg.Guild(util.ServerID)
+	if err != nil {
+		log.Error("Something broke ", err)
+		return
 	}
-	return list
+
+	availbleRoles := g.Roles // Roles already created and listed from discord
+	for _, value := range targetMap {
+		if value.ip == channel.Name || value.hostname == channel.Name {
+			for _, role := range availbleRoles {
+				if value.teamstring == role.Name || value.hostname == role.Name {
+					println("Found role: ", role.Name)
+					println(channel.Name + " should be assigned " + role.Name)
+					permissionOverwriteList = append(permissionOverwriteList, &discordgo.PermissionOverwrite{ID: role.ID})
+					log.Info("Assigning " + role.Name + " to " + channel.Name)
+					dg.ChannelEditComplex(channel.ID, &discordgo.ChannelEdit{PermissionOverwrites: permissionOverwriteList})
+				}
+			}
+		}
+
+		// REMINDER: Message has a MentionRoles(this should have the @team01, @hostname)
+		// REMINDER: Message also has timestamp which can be used to remove dead channels
+		// Good channel struct value: lastmessageid,
+		// dg.ChannelPermissionSet()
+	}
+
+	log.Info("Assigning roles ended.......")
 }
 
 // Create/Delete Roles for each target
 func createOrDeleteRoles(dg *discordgo.Session, create bool) {
 	log.Info("Creating Roles....")
-	g, err := dg.Guild(constants.ServerID)
+	g, err := dg.Guild(util.ServerID)
 	if err != nil {
 		log.Error("Something broke ", err)
 		return
@@ -86,28 +156,37 @@ func createOrDeleteRoles(dg *discordgo.Session, create bool) {
 	potentialRole := []string{} // Roles to be created
 	availbleRoles := g.Roles    // Roles already created and listed from discord
 
-	for _, host := range list {
+	for _, host := range targetMap {
 		potentialRole = append(potentialRole, host.hostname)
 		potentialRole = append(potentialRole, host.teamstring)
 	}
 
 	// New list without duplicates
-	rolesToCreate := removeDuplicatesValues(potentialRole) // Roles to be created
+	rolesToCreate := util.RemoveDuplicatesValues(potentialRole) // Roles to be created
 
 	if !create { // We want to delete the roles
 		for _, role := range availbleRoles {
 			for _, roleToDelete := range potentialRole {
 				log.Info("Deleting " + role.Name)
 				if roleToDelete == role.Name || role.Name == "new role" {
-					dg.GuildRoleDelete(constants.ServerID, role.ID)
+					dg.GuildRoleDelete(util.ServerID, role.ID)
 					break
 				}
 			}
 		}
 	} else {
-		// TODO Do a check if a role already exist
+		tmpAvailbleRole := []string{} //This is getting the role name(string) rather the role struct
+		for _, i := range availbleRoles {
+			tmpAvailbleRole = append(tmpAvailbleRole, i.Name)
+		}
+
 		for _, role := range rolesToCreate {
 			// Color Fix: Thank Fred
+			checkRole := util.Find(tmpAvailbleRole, role)
+			if checkRole {
+				return
+			}
+
 			var colorInRGB randomcolor.RGBColor = randomcolor.GetRandomColorInRgb()
 			roleColorHex := fmt.Sprintf("%.2x%.2x%.2x", colorInRGB.Red, colorInRGB.Green, colorInRGB.Blue)
 			roleColorInt64, err := strconv.ParseInt(roleColorHex, 16, 64)
@@ -117,12 +196,12 @@ func createOrDeleteRoles(dg *discordgo.Session, create bool) {
 			roleColorInt := int(roleColorInt64)
 
 			log.Info("Creating " + role + " role with color RGB: " + strconv.Itoa(roleColorInt))
-			newRole, err := dg.GuildRoleCreate(constants.ServerID)
+			newRole, err := dg.GuildRoleCreate(util.ServerID)
 			if err != nil {
 				log.Error(err)
 			}
 			// Editing the role template
-			_, err = dg.GuildRoleEdit(constants.ServerID, newRole.ID, role, roleColorInt, false, 171429441, true)
+			_, err = dg.GuildRoleEdit(util.ServerID, newRole.ID, role, roleColorInt, false, 171429441, true)
 			if err != nil {
 				log.Error(err)
 			}
@@ -134,8 +213,7 @@ func createOrDeleteRoles(dg *discordgo.Session, create bool) {
 // This function organizes the targets to their respective categories(team01, team02 and so on)
 func cleanChannels(dg *discordgo.Session, targetFile string) {
 	log.Info("Start Clean")
-	targetMap, teams, _ := parseCSV(targetFile)
-	checkChannels, _ := dg.GuildChannels(constants.ServerID)
+	checkChannels, _ := dg.GuildChannels(util.ServerID)
 	for _, catName := range teams {
 		groupExixsts := false
 		for _, channelCheck := range checkChannels {
@@ -147,19 +225,20 @@ func cleanChannels(dg *discordgo.Session, targetFile string) {
 		}
 		if !groupExixsts {
 			log.Info("Creating non-Existing group")
-			newChan, _ := dg.GuildChannelCreate(constants.ServerID, catName, 4)
+			newChan, _ := dg.GuildChannelCreate(util.ServerID, catName, 4)
 			checkChannels = append(checkChannels, newChan)
 		}
 	}
 
 	var channelName2ID = make(map[string]string)
-	channels, _ := dg.GuildChannels(constants.ServerID)
+	channels, _ := dg.GuildChannels(util.ServerID)
 	for _, channel := range channels {
 		if _, ok := channelName2ID[channel.Name]; !ok {
 			channelName2ID[channel.Name] = channel.ID
 		}
 	}
 	for _, channel := range channels {
+		assignRoleToChannel(dg, channel)
 		if _, ok := channelName2ID[channel.Name]; !ok {
 			channelName2ID[channel.Name] = channel.ID
 		}
@@ -173,36 +252,14 @@ func cleanChannels(dg *discordgo.Session, targetFile string) {
 }
 
 func main() {
-	flag.StringVar(&fileInputPtr, "target", "", "This csv should contains the list of targets: ip,team#,hostname")
-	statPtr := flag.Bool("stat", false, "True to create role, False to delete roles")
-	flag.Parse()
+	targetMap, teams, hostnameList = parseCSV(fileInputPtr)
 
-	if fileInputPtr == "" {
-		log.Fatal("No file specified")
-		os.Exit(0)
-	}
-
-	log.SetOutput(os.Stdout)
-	log.Info("Target file: " + fileInputPtr)
-
-	dg, err := discordgo.New("Bot " + constants.BotToken)
-	if err != nil {
-		fmt.Println("error creating Discord session,", err)
-		return
-	}
-	log.Info("Bot Connected")
+	createOrDeleteRoles(dg, true)
 
 	cleanChannels(dg, fileInputPtr)
 
-	// true --> Create roles
-	// false --> Delete roles
-	if *statPtr {
-		createOrDeleteRoles(dg, false) // Change the value to false to delete roels
-	} else {
-		createOrDeleteRoles(dg, true) // Change the value to false to delete roels
-	}
-
 	dg.AddHandler(guimessageCreater)
+	dg.AddHandler(slashCommandHandler)
 
 	// Open a websocket connection to Discord and begin listening.
 	err = dg.Open()
@@ -210,17 +267,24 @@ func main() {
 		return
 	}
 
+	// Register slash commands
+	for _, v := range commands {
+		_, err := dg.ApplicationCommandCreate(dg.State.User.ID, util.ServerID, v)
+		if err != nil {
+			log.Panicf("Cannot create '%v' command: %v", v.Name, err)
+		}
+	}
+
 	// Wait here until CTRL-C or other term signal is received.
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	<-sc
 
-	// Delete a channel
-	dg.ChannelDelete(channelID.ID)
+	// Delete a channel after we stop the bot
+	// dg.ChannelDelete(channelID.ID)
 
 	// Cleanly close down the Discord session.
 	dg.Close()
-
 }
 
 // updatepwnBoard sends a post request to pwnboard with the IP
@@ -253,6 +317,7 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 	if strings.HasPrefix(message.Content, "!heartbeat") {
 		agent_ip_address := strings.Split(message.Content, " ")[1]
 		updatepwnBoard(agent_ip_address)
+		heartbeatCounter += 1
 	}
 
 	if message.Author.ID == dg.State.User.ID {
@@ -271,17 +336,20 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 	if message.Content == "clean" {
 		cleanChannels(dg, fileInputPtr)
 		dg.ChannelMessageSend(message.ChannelID, "Cleaned")
+
+		// TODO - Check for dead channels based on the last !heartbeat timestamp
 	}
 
 	if message.Content == "delcomp" {
-		channels, _ := dg.GuildChannels(constants.ServerID)
-		_, teamnums, hostnames := parseCSV(fileInputPtr)
+		channels, _ := dg.GuildChannels(util.ServerID)
 
 		log.Info("Looking at the channels")
 		for _, channel := range channels {
 			if channel.Type == discordgo.ChannelTypeGuildText {
-				for _, hostname := range hostnames {
+				for _, hostname := range hostnameList {
 					if strings.ToLower(hostname) == channel.Name {
+						// Sending kill command to bot before deleting channel
+						dg.ChannelMessageSend(channel.ID, "kill")
 						log.Info("Deleting channel: " + channel.Name)
 						_, err := dg.ChannelDelete(channel.ID)
 						if err != nil {
@@ -297,7 +365,7 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 		log.Info("Looking at the category")
 		for _, channel := range channels {
 			if channel.Type == discordgo.ChannelTypeGuildCategory {
-				for _, teamnum := range teamnums {
+				for _, teamnum := range teams {
 					if teamnum == channel.Name {
 						log.Info("Deleting category: " + channel.Name)
 						_, err := dg.ChannelDelete(channel.ID)
@@ -310,6 +378,52 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 				}
 			}
 		}
+		println("Looking at roles")
+		createOrDeleteRoles(dg, false)
+	}
 
+	// Responsible for mentioned roles
+	// Is there a better way to do this???? --- Message me if you can think of something better
+	channels, _ := dg.GuildChannels(util.ServerID)
+	if len(message.MentionRoles) > 0 {
+		log.Info(message.MentionRoles)
+		// Loop through the mentioned roles
+		for _, role := range message.MentionRoles {
+			println(role)
+			// Loop through the channels
+			for _, channel := range channels {
+				// Loop through channel's Permission overwrites(roles)
+				for _, overwrite := range channel.PermissionOverwrites {
+					if role == overwrite.ID {
+						log.Info(channel.Name, " has role ", overwrite.ID)
+						dg.ChannelMessageSend(channel.ID, message.Content)
+					}
+				}
+			}
+		}
+	}
+}
+
+func slashCommandHandler(dg *discordgo.Session, i *discordgo.InteractionCreate) {
+	if i.Type != discordgo.InteractionApplicationCommand {
+		return
+	}
+
+	data := i.ApplicationCommandData()
+	log.Info(data.Name)
+	switch data.Name {
+	case "stats":
+		log.Info("Getting stats")
+		dg.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "Getting you some stats\n Number of heartbeats: " + strconv.Itoa(heartbeatCounter) + " \nNumber of alive/dead agents: ",
+			},
+		})
+	case "archive":
+		log.Info("Archive dead channels")
+
+	case "delcomp":
+		log.Info("Deleting Channels")
 	}
 }
