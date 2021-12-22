@@ -22,3 +22,4 @@ Changelog 2.2
 * Ability to send commands to multiple targets via roles
 * Updated the agent to work with roles commands
 * Option to use slash commands(stats, archive, clean, delcomp)
+* Fixed bug where you command outputs are not fully being sent
