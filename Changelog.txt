@@ -23,3 +23,5 @@ Changelog 2.2
 * Updated the agent to work with roles commands
 * Option to use slash commands(stats, archive, clean, delcomp)
 * Fixed bug where you command outputs are not fully being sent
+
+
