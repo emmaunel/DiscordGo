@@ -14,6 +14,8 @@
 Discord C2 for Redteam engagement....Need a better name.
 If you can think of one, please tell me. :)
 
+Not to be confused with DiscordGo library which I use for the backend.
+
 # Why I made this
 
 During Blue-Red Team competition, I needed an easy and fast way to keep connected and a way for mutiple redteamer to run commands, hence DiscordGo.
@@ -59,8 +61,8 @@ To use the organizer bot, create a .csv file with the following format(targetIP,
 * Note target IP shouldn't have the `.` between them.
 
 ```
-192168185200,team01,hostname1
-192168185201,team02,hostname2
+192168185200,team01,hostname1,windows
+192168185201,team02,hostname2,linux
 ```
 
 To start the organizer bot: `go run cmd/organizer/main.go --target <csv_filename>.csv`
@@ -76,10 +78,11 @@ Run `clean` in any channel to organize bots into their respective categories.
 # WIP (Work in Progress)
 
 - [x] Cross-platform
-- [ ] File upload
+- [x] File upload
 - [x] File download
-- [ ] Agent grouping(by hostname like web hosts and so on, slash command)
-- [ ] Group commands
+- [x] Agent grouping(by hostname like web hosts and so on, slash command)
+- [x] Group commands
+- [ ] Add logging to organizer
 - [ ] Integrate with pwndrop
 
 
@@ -96,6 +99,10 @@ Run `clean` in any channel to organize bots into their respective categories.
   </a>
 </p>
 
+# Co-Authors
+
+* @Fred(https://github.com/frybin)
+Thanks for late night fixes during deploy
 
 # Disclamers
 The author is in no way responsible for any illegal use of this software. It is provided purely as an educational proof of concept. I am also not responsible for any damages or mishaps that may happen in the course of using this software. Use at your own risk.

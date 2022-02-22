@@ -24,4 +24,13 @@ Changelog 2.2
 * Option to use slash commands(stats, archive, clean, delcomp)
 * Fixed bug where you command outputs are not fully being sent
 
+Changelog 2.2.1
+* Added upload functionality
+* Added download functionality
+
+Changelog 2.2.2
+* Fixed special commands bugs :)
+* Added multi group commands(@team01, @linux)
+* Added os type to .csv file
+* Added fuckbsd to the make file....sigh
 

