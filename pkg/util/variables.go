@@ -1,5 +1,5 @@
 // Package constants contains sensitive informations like the serverID and BotToken
-package constants
+package util
 
 var ServerID = "XXXXXXXXXXXXXXXXX"
 var BotToken = "XXXXXXXXXXXXXXXXX"
