@@ -74,7 +74,7 @@ type PwnBoard struct {
 
 // This init function
 func init() {
-	flag.StringVar(&fileInputPtr, "target", "", "This csv should contains the list of targets: ip,team#,hostname,ostype")
+	flag.StringVar(&fileInputPtr, "f", "", "This csv should contains the list of targets: ip,team#,hostname,ostype")
 	flag.Parse()
 
 	if fileInputPtr == "" {
