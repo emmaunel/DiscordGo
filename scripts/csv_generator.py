@@ -9,12 +9,13 @@ def get_hosts(num_of_teams, ip_format, name, os):
         ip = ip_format.replace("X",str(i))
         # Remove dots
         ip = ip.replace(".", "")
-        fd.write(ip + "," + name + "," + os + "\n")
+        teamNum = "team0" + str(i)
+        fd.write(ip + "," + teamNum + "," + name + "," + os + "\n")
 
 def getinput():
     global compName
     compName = input("Enter Comp name: ")
-    num_of_teams=int(input(colored("Enter the number of blue teams including test team (Blue team sucks!): ", "blue")))
+    num_of_teams=int(input(colored("Enter the number of blue teams including test team: ", "blue")))
     hostsPerTeam = int(input(colored("Enter the number of hosts per team (windows + linux + router)", "blue") + ": "))
 
 
