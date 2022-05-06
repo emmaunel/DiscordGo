@@ -57,15 +57,22 @@ After that is done, all you have to do is run `make`. That will create 3 binarie
 
 ## Organizer Bot
 
-To use the organizer bot, create a .csv file with the following format(targetIP, teamNum, hostname):
-* Note target IP shouldn't have the `.` between them.
+When you have target connecting back to your discord server, channels are created by their ip addresses. This can quickly get hard to manage. Solution: Another bot to organize the targets channels.
+
+To use the organizer bot, run the csv generator script in the scripts folder:
+```
+$ pip3 install -r requirements.txt
+$ python3 csv_generator.py
+```
+
+This will create a csv like this:
 
 ```
 192168185200,team01,hostname1,windows
 192168185201,team02,hostname2,linux
 ```
 
-To start the organizer bot: `go run cmd/organizer/main.go --target <csv_filename>.csv`
+To start the organizer bot: `go run cmd/organizer/main.go -f <csv_filename>.csv`
 
 Run `clean` in any channel to organize bots into their respective categories.
 
@@ -82,7 +89,8 @@ Run `clean` in any channel to organize bots into their respective categories.
 - [x] File download
 - [x] Agent grouping(by hostname like web hosts and so on, slash command)
 - [x] Group commands
-- [ ] Add logging to organizer
+- [X] Add logging to organizer
+- [X] Comp CSV Generation file
 - [ ] Integrate with pwndrop
 
 
