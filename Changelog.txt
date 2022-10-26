@@ -34,3 +34,9 @@ Changelog 2.2.2
 * Added os type to .csv file
 * Added fuckbsd to the make file....sigh
 
+
+Changelog 2.3
+* prune command added
+* csv generator script created for organizer
+* Updated go build command to include runtime variable insertion(https://stackoverflow.com/questions/47509272/how-to-set-package-variable-using-ldflags-x-in-golang-build)
+
