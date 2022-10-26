@@ -418,6 +418,27 @@ func guimessageCreater(dg *discordgo.Session, message *discordgo.MessageCreate) 
 			}
 		}
 	}
+
+
+	// Working on deleting old messages to clean up channels history
+	if message.Content == "prune"{
+		msgIDs := []string{}
+		dg.ChannelMessageSend(message.ChannelID, "Deleting 100 messages")
+		st, _ := dg.ChannelMessages(message.ChannelID, 100, "", "", "")
+		for _, s := range st{
+			// dg.ChannelMessageDelete(message.ChannelID, s.ID)
+
+			msgIDs = append(msgIDs, s.ID)
+		}
+
+		log.Info("Prune ")
+		println(len(msgIDs))
+
+		err := dg.ChannelMessagesBulkDelete(message.ChannelID, msgIDs)
+		if err != nil {
+			println(err.Error())
+		}
+	}
 }
 
 func slashCommandHandler(dg *discordgo.Session, i *discordgo.InteractionCreate) {
