@@ -5,7 +5,7 @@
   </a>
 </p>
 
-![Version](https://img.shields.io/badge/Version-2.0-brightgreen)
+![Version](https://img.shields.io/badge/Version-2.2-brightgreen)
 ![Language](https://img.shields.io/badge/Language-Go-blue.svg?longCache=true&style=flat-square)
 [![Go Report Card](https://goreportcard.com/badge/github.com/emmaunel/DiscordGo)](https://goreportcard.com/report/github.com/emmaunel/DiscordGo)
 ![nil](https://img.shields.io/badge/nil-goated-green)
@@ -37,27 +37,34 @@ When creating the bot, you need it give it some permission. For testing, I gave 
 
 # Usage
 
-Edit this file `pkg/util/variables.go` with your `BotToken` and `ServerID`. Or create the file if not there
+~~Edit this file `pkg/util/variables.go` with your `BotToken` and `ServerID`. Or create the file if not there~~
+
+GOOD NEWS, No need to edit any files. After learning some interesting build flags in go. All you have to do is run `make`. 
+
+This will ask you for the necessary information and create the binaries off of that. Example below:
+
+<p align="center">
+  <a>
+    <img src="./img/make.png" width="860">
+  </a>
+</p>
+
 
 The bot token can be found on discord developer dashboard where you created the bot. To get your server ID, go to your server setting and click on `widget`. On the right pane, you see the your ID.
 
-An example configuration file looks like this:
-```
-var ServerID = "XXXXXXXXXXX"
-var BotToken = "XXXXXXXXXXX"
-```
-
-After that is done, all you have to do is run `make`. That will create 3 binaries.
+After that is done, That will create 5 agent binaries and 1 organizer binary. 
 
 ```
 - linux-agent
 - windows-agent.exe
 - macos-agent
+- rasp-agent
+- bsd-agent
 ```
 
 ## Organizer Bot
 
-When you have target connecting back to your discord server, channels are created by their ip addresses. This can quickly get hard to manage. Solution: Another bot to organize the targets channels.
+When you have target connecting back to your discord server, channels are created by their ip addresses. This can quickly get difficult to manage. Solution: Another bot to organize the targets channels.
 
 To use the organizer bot, run the csv generator script in the scripts folder:
 ```
@@ -72,7 +79,7 @@ This will create a csv like this:
 192168185201,team02,hostname2,linux
 ```
 
-To start the organizer bot: `go run cmd/organizer/main.go -f <csv_filename>.csv`
+To start the organizer bot: `go run cmd/organizer/main.go -f <csv_filename>.csv` or `./organizer -f <csv_filename>.csv`
 
 Run `clean` in any channel to organize bots into their respective categories.
 

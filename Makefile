@@ -1,13 +1,17 @@
+# Getting bot token and serverid
+SERVERID ?= $(shell bash -c 'read -p "ServerID: " sid; echo $$sid')
+BOTTOKEN ?= $(shell bash -c 'read -p "BotToken: " token; echo $$token')
+
 DIRECTORY=bin
 MAC=macos-agent
 LINUX=linux-agent
 WIN=windows-agent.exe
 RASP=rasp
 BSD=bsd-agent
-FLAGS=-ldflags "-s -w"
+FLAGS=-ldflags "-s -w -X 'DiscordGo/pkg/util.ServerID=$(SERVERID)' -X 'DiscordGo/pkg/util.BotToken=$(BOTTOKEN)'"
 WIN-FLAGS=-ldflags -H=windowsgui
 
-all: clean create-directory agent-mac agent-linux agent-windows agent-rasp agent-fuckbsd
+all: clean create-directory agent-mac agent-linux agent-windows agent-rasp agent-fuckbsd organizer
 
 create-directory:
 	mkdir ${DIRECTORY}
@@ -31,6 +35,10 @@ agent-rasp:
 agent-fuckbsd:
 	echo "Compiling FUCKBSD binary"
 	env GOOS=freebsd GOARCH=amd64 go build ${FLAGS} -o ${DIRECTORY}/${BSD} cmd/agent/main.go
+
+organizer:
+	echo "Compiling Organizer binary"
+	go build ${FLAGS} -o ${DIRECTORY}/organizer cmd/organizer/main.go
 
 clean:
 	rm -rf ${DIRECTORY}

@@ -24,7 +24,6 @@ var channelID *discordgo.Channel
 
 // Create an Agent with all the necessary information
 func init() {
-
 	newAgent = &agent.Agent{}
 	newAgent.HostName, _ = os.Hostname()
 	newAgent.IP = agent.GetLocalIP()
